@@ -15,14 +15,14 @@ Rebuild of mda.mt (Malta Detailing Academy: car detailing courses and gift vouch
 
 ## Stack
 
-| Layer               | Choice                                                                                          |
-| ------------------- | ----------------------------------------------------------------------------------------------- |
-| App                 | Next.js (App Router), TypeScript, Tailwind                                                      |
-| Hosting             | Vercel — team "mikegauci's projects"                                                            |
-| DB / Auth / Storage | Supabase project `mda` (ref `mdggdxoymeridyojnzlu`, eu-north-1), same Supabase account as Rotta |
-| Payments            | Stripe — key pasted in Admin → Payments                                                         |
-| Email               | Mailjet (new account), sender and admin notifications `info@mda.mt`                             |
-| Repo                | github.com/mikegauci/mda (public)                                                               |
+| Layer               | Choice                                                                                                                      |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| App                 | Next.js (App Router), TypeScript, Tailwind                                                                                  |
+| Hosting             | Vercel — team "mikegauci's projects"                                                                                        |
+| DB / Auth / Storage | Supabase project `mda` (ref `mdggdxoymeridyojnzlu`, eu-north-1), same Supabase account as Rotta                             |
+| Payments            | Stripe — key pasted in Admin → Payments                                                                                     |
+| Email               | Mailjet (new account): sender `website@mda.mt` (`EMAIL_FROM`), notifications to `info@mda.mt` (`EMAIL_ADMIN_TO`), as on JAM |
+| Repo                | github.com/mikegauci/mda (public)                                                                                           |
 
 ## Current site (source of truth for migration)
 
@@ -57,7 +57,7 @@ pnpm migrate       # WordPress import dry run; --apply writes to Supabase
 - Roles: `profiles.role` is `admin` or `customer`; `admin_capabilities` null = full admin, else a section allowlist (`pages`, `products`, `orders`, `media`).
 - DB changes are SQL files in `supabase/migrations/`, applied with the Supabase connector. Every migrated table has a `wp_id`. Money is integer euro cents including 18% VAT.
 - Media: public `media` bucket, rows in `public.media`, `mediaUrl(path)`. Imported files are `wp/<yyyy>/<mm>/<name>.webp`. Contact-form files go to the private `contact-uploads` bucket via signed upload URLs.
-- Email: `sendEmail()` (`@/lib/email/send`) sends through Mailjet; without keys it logs instead.
+- Email: `sendEmail()` (`@/lib/email/send`) sends through Mailjet from `website@mda.mt`; without keys it logs instead. Password-reset emails come from Supabase Auth, so its custom SMTP (Mailjet) must use the same sender.
 - Shop follows WooCommerce, but there is no shop page: `/shop/` (and any `/product-category/`, `/product-tag/` URL) redirects to `/#courses`, the homepage's course tiles, as on the live site. Pages: `/product/<slug>/`, `/cart/`, `/checkout/`, `/my-account/` (login, `lost-password/`, `reset-password/`). No cart drawer: adding shows WooCommerce's notice. A zero price means "not for sale".
 - Courses are variable products: the "Date & Time" option has one variant per session. Stock follows WooCommerce: a variant that manages its own stock uses it, otherwise the course's stock (`products.stock_quantity`) applies; `backorders` lets a full course still be booked. Reserved lines record `stock_source` so release/purge restore the same stock. Seat texts are `products.stock_messages` (defaults in `seatsMessage()`); grid cards show "N places available".
 - Course page extras (the live theme's ACF fields): `details` (icon + HTML line) on `details_background_media_id`, `upsell_ids` ("You may also like…"), `cross_sell_ids`. The description holds its own "More info" heading.
