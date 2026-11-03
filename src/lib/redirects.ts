@@ -58,12 +58,12 @@ function normalize(path: string) {
 function legacyRule(path: string): Rule | null {
   if (/^\/(sitemap_index|[a-z_]+-sitemap\d*)\.xml$/.test(path))
     return { destination: "/sitemap.xml", permanent: true };
-  if (/^\/product-tag\//.test(path))
-    return { destination: "/shop/", permanent: true };
+  // There is no shop page: the homepage's course grid is the catalogue.
+  if (/^\/product-(tag|category)\//.test(path))
+    return { destination: "/#courses", permanent: true };
   if (path === "/login/" || path === "/my-account/lost-password/reset/")
     return { destination: "/my-account/", permanent: true };
-  if (path === "/shop/")
-    return { destination: "/shop/", permanent: true };
+  if (path === "/shop/") return { destination: "/#courses", permanent: true };
   if (path === "/wp-login.php" || path.startsWith("/wp-admin"))
     return { destination: "/my-account/", permanent: false };
   if (path === "/hello-world/" || /\/feed\/$/.test(path))

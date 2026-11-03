@@ -1,4 +1,5 @@
-// Billing and delivery details from the checkout page (WooCommerce's fields).
+// Billing details from the checkout page (WooCommerce's fields). Courses
+// are not shipped, so the "shipping" address is the billing one.
 export type Address = {
   first_name: string;
   last_name: string;
@@ -47,8 +48,8 @@ function address(raw: unknown, withPhone: boolean): Address | null {
   return out;
 }
 
-// Validates the details sent to /api/checkout/. Delivery is Malta & Gozo
-// only, so the country is always MT, as on the live checkout.
+// Validates the details sent to /api/checkout/. The country is Malta, the
+// store's base country.
 export function parseCustomerDetails(
   raw: unknown,
 ): CustomerDetails | { error: string } {
@@ -64,9 +65,7 @@ export function parseCustomerDetails(
     email.length > 200
   )
     return { error: "Please fill in all required billing fields." };
-  const shipping = r.ship_elsewhere ? address(r.shipping, false) : billing;
-  if (!shipping)
-    return { error: "Please fill in all required delivery fields." };
+  const shipping = billing;
   const note = typeof r.note === "string" ? r.note.trim().slice(0, 2000) : "";
   return { billing: { ...billing, email }, shipping, note };
 }

@@ -181,6 +181,7 @@ export class MediaRegistry {
   async convert(entry: Entry) {
     const file = path.join(this.workDir, "uploads", entry.source);
     const ext = path.extname(entry.path).slice(1).toLowerCase();
+    if (ext === "mp4") return this.convertVideo(file);
     if (
       ext !== "webp" ||
       !CONVERT.has(path.extname(entry.source).slice(1).toLowerCase())
@@ -214,6 +215,62 @@ export class MediaRegistry {
       mime: "image/webp",
       width: info.width,
       height: info.height,
+      originalBytes: statSync(file).size,
+    };
+  }
+
+  // Background videos (the homepage hero): 1280px wide H.264 without sound,
+  // which keeps them well under the bucket's 20 MB file limit. Needs ffmpeg.
+  private convertVideo(file: string) {
+    const out = path.join(this.workDir, "video", `${path.basename(file)}`);
+    mkdirSync(path.dirname(out), { recursive: true });
+    try {
+      execFileSync("ffmpeg", [
+        "-y",
+        "-loglevel",
+        "error",
+        "-i",
+        file,
+        "-an",
+        "-vf",
+        "scale='min(1280,iw)':-2",
+        "-c:v",
+        "libx264",
+        "-preset",
+        "slow",
+        "-crf",
+        "28",
+        "-pix_fmt",
+        "yuv420p",
+        "-movflags",
+        "+faststart",
+        out,
+      ]);
+    } catch (error) {
+      throw new Error(
+        `ffmpeg is needed to compress videos (${(error as Error).message})`,
+      );
+    }
+    const probe = execFileSync("ffprobe", [
+      "-v",
+      "error",
+      "-select_streams",
+      "v:0",
+      "-show_entries",
+      "stream=width,height",
+      "-of",
+      "csv=p=0",
+      out,
+    ])
+      .toString()
+      .trim()
+      .split(",")
+      .map(Number);
+    return {
+      body: readFileSync(out),
+      mime: "video/mp4",
+      width: probe[0] || null,
+      height: probe[1] || null,
       originalBytes: statSync(file).size,
     };
   }

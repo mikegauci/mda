@@ -22,6 +22,14 @@ export type ProductInput = {
   sort_order: number;
   seo: { title?: string; description?: string; noindex?: boolean };
   gallery: string[];
+  // Course fields (the live theme's ACF and stock fields).
+  backorders: boolean;
+  hide_stock_status: boolean;
+  stock_messages: Partial<Record<StockMessage, string>>;
+  details: { icon_media_id: string | null; html: string }[];
+  details_background_media_id: string | null;
+  upsell_ids: string[];
+  cross_sell_ids: string[];
   variants: Pick<
     Tables<"product_variants">,
     | "id"
@@ -32,9 +40,13 @@ export type ProductInput = {
     | "manage_stock"
     | "stock_quantity"
     | "stock_status"
+    | "backorders"
     | "image_media_id"
   >[];
 };
+export type StockMessage =
+  "in_stock" | "low_stock" | "backorder" | "out_of_stock";
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 export async function saveProduct(
   input: ProductInput,
 ): Promise<{ error: string } | { id: string }> {
@@ -100,6 +112,30 @@ export async function saveProduct(
   }
   if (input.options.length && !input.variants.length)
     return { error: "Add variants for the product options." };
+  if (
+    !Array.isArray(input.details) ||
+    input.details.length > 20 ||
+    input.details.some(
+      (d) =>
+        typeof d.html !== "string" ||
+        d.html.length > 2000 ||
+        (d.icon_media_id !== null && !UUID.test(d.icon_media_id)),
+    ) ||
+    Object.entries(input.stock_messages ?? {}).some(
+      ([key, text]) =>
+        !["in_stock", "low_stock", "backorder", "out_of_stock"].includes(key) ||
+        typeof text !== "string" ||
+        text.length > 200,
+    ) ||
+    [...input.upsell_ids, ...input.cross_sell_ids].some(
+      (v) => !UUID.test(v) || v === input.id,
+    ) ||
+    (input.details_background_media_id !== null &&
+      !UUID.test(input.details_background_media_id))
+  )
+    return {
+      error: "Check the course details, seat texts and linked courses.",
+    };
   const { id, gallery, variants, ...row } = input;
   const previous = id
     ? (await db.from("products").select("slug,status").eq("id", id).single())
@@ -179,6 +215,13 @@ export async function duplicateProduct(
       status: "draft",
       sort_order: p.sort_order,
       seo: p.seo,
+      backorders: p.backorders,
+      hide_stock_status: p.hide_stock_status,
+      stock_messages: p.stock_messages,
+      details: p.details,
+      details_background_media_id: p.details_background_media_id,
+      upsell_ids: p.upsell_ids,
+      cross_sell_ids: p.cross_sell_ids,
     } as Json,
     variants: p.variants
       .sort((a, b) => a.sort_order - b.sort_order)
@@ -191,6 +234,7 @@ export async function duplicateProduct(
         manage_stock: v.manage_stock,
         stock_quantity: v.stock_quantity,
         stock_status: v.stock_status,
+        backorders: v.backorders,
         image_media_id: v.image_media_id,
         sort_order: i,
       })) as Json,

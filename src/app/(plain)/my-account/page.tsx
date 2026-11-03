@@ -90,10 +90,7 @@ async function Account() {
         ) : (
           <p>
             No order has been made yet.{" "}
-            <Link
-              href="/shop/"
-              className="text-brand hover:underline"
-            >
+            <Link href="/#courses" className="text-brand hover:underline">
               Browse products
             </Link>
           </p>

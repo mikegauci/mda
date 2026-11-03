@@ -4,12 +4,13 @@ import { env } from "@/lib/env";
 import "./globals.css";
 import { CartProvider } from "@/components/shop/cart";
 
-// MADE Outer Sans, self-hosted by the live theme (same files and weights).
+// MADE Outer Sans, self-hosted by the live theme with the same weights:
+// Thin is 300 (body), Regular 500, Black 700 (headings).
 const made = localFont({
   src: [
-    { path: "./fonts/MADE-Outer-Sans-Thin.otf", weight: "100" },
-    { path: "./fonts/MADE-Outer-Sans-Regular.otf", weight: "400" },
-    { path: "./fonts/MADE-Outer-Sans-Black.otf", weight: "900" },
+    { path: "./fonts/MADE-Outer-Sans-Thin.otf", weight: "300" },
+    { path: "./fonts/MADE-Outer-Sans-Regular.otf", weight: "500" },
+    { path: "./fonts/MADE-Outer-Sans-Black.otf", weight: "700" },
   ],
   variable: "--font-made",
   display: "swap",
@@ -19,7 +20,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(env.siteUrl),
   title: {
     default: "Malta Detailing Academy",
-    template: "%s | Malta Detailing Academy",
+    template: "%s - Malta Detailing Academy",
   },
   description:
     "Detailing courses in Malta: learn to detail your own car with one-to-one practice with professional instructors.",

@@ -98,6 +98,17 @@ export function importShop(ctx: Context, users: Map<string, string>) {
         }
   }
 
+  // Upsells and cross-sells are serialized lists of product ids; links to
+  // products that are not imported are dropped.
+  const importedProducts = new Set(products.map((p) => p.ID!));
+  const linkedIds = (value: string | undefined) => {
+    const list = maybeUnserialize(value ?? null);
+    return (Array.isArray(list) ? list : Object.values(list ?? {}))
+      .map(String)
+      .filter((id) => importedProducts.has(id))
+      .map((id) => ctx.id("products", id));
+  };
+
   const productRows = products.map((p, index) => {
     const id = ctx.id("products", p.ID!);
     const m = meta.get(p.ID!) ?? new Map<string, string>();
@@ -179,13 +190,46 @@ export function importShop(ctx: Context, users: Map<string, string>) {
       options,
       featured_media_id:
         ctx.media.byAttachment(m.get("_thumbnail_id"))?.id ?? null,
-      // Virtual products are services here (e.g. battery servicing), so they
+      // Virtual products are services here (courses), so they
       // stay published like on the live shop.
       status:
         p.post_status === "publish" && m.get("_downloadable") !== "yes"
           ? ("published" as const)
           : ("draft" as const),
       contact_button: m.get("_enable_contact_us_button") === "yes",
+      backorders: (m.get("_backorders") ?? "no") !== "no",
+      hide_stock_status: m.get("hide_stock_status") === "yes",
+      // Seat texts from the theme's stock fields; empty ones fall back to the
+      // site defaults.
+      stock_messages: Object.fromEntries(
+        (
+          [
+            ["in_stock", "s_in_stock"],
+            ["low_stock", "only_s_left_in_stock"],
+            ["backorder", "available_on_backorder"],
+            ["out_of_stock", "out_of_stock"],
+          ] as const
+        )
+          .map(([key, metaKey]) => [
+            key,
+            decodeEntities(m.get(metaKey) ?? "").trim(),
+          ])
+          .filter(([, text]) => text),
+      ),
+      // ACF "product_details" repeater: an icon and a line of HTML each.
+      details: Array.from(
+        { length: Number.parseInt(m.get("product_details") ?? "0", 10) || 0 },
+        (_, i) => ({
+          icon_media_id:
+            ctx.media.byAttachment(m.get(`product_details_${i}_icon`))?.id ??
+            null,
+          html: ctx.html(m.get(`product_details_${i}_title`) ?? ""),
+        }),
+      ).filter((d) => d.html || d.icon_media_id),
+      details_background_media_id:
+        ctx.media.byAttachment(m.get("background_image"))?.id ?? null,
+      upsell_ids: linkedIds(m.get("_upsell_ids")),
+      cross_sell_ids: linkedIds(m.get("_crosssell_ids")),
       addons: addonsByProduct.get(p.ID!) ?? [],
       sort_order: index,
       seo: seoFrom(ctx, m, p.post_title ?? ""),
@@ -224,6 +268,7 @@ export function importShop(ctx: Context, users: Map<string, string>) {
             ? Number.parseInt(m.get("_stock") ?? "0", 10)
             : null,
         stock_status: STOCK[m.get("_stock_status") ?? "instock"] ?? "in_stock",
+        backorders: (m.get("_backorders") ?? "no") !== "no",
         image_media_id:
           ctx.media.byAttachment(m.get("_thumbnail_id"))?.id ?? null,
         sort_order: index,

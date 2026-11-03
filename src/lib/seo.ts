@@ -5,7 +5,7 @@ import { mediaUrl } from "@/lib/media";
 import { getStaticPage } from "@/lib/static-pages";
 
 // The `seo` jsonb on every content type (replaces Yoast). `title` is the full
-// browser title; without it the title is "<name> | Malta Detailing Academy", Yoast's
+// browser title; without it the title is "<name> - Malta Detailing Academy", Yoast's
 // default on the live site.
 export type Seo = {
   title?: string;
@@ -39,7 +39,7 @@ export function pageMetadata({
   noindex?: boolean;
   publishedTime?: string | null;
 }): Metadata {
-  const title = seo.title || `${name} | Malta Detailing Academy`;
+  const title = seo.title || `${name} - Malta Detailing Academy`;
   const text = (seo.description || description || "").trim() || undefined;
   const canonical = seo.canonical || path;
   const ogImage = image
@@ -86,6 +86,6 @@ export async function codePageMetadata(
 
 // For generateMetadata when the slug doesn't exist (the page then 404s).
 export const notFoundMetadata: Metadata = {
-  title: { absolute: "Page not found | Malta Detailing Academy" },
+  title: { absolute: "Page not found - Malta Detailing Academy" },
   robots: { index: false },
 };

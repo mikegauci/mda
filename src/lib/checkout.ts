@@ -184,12 +184,9 @@ export async function fulfillSession(
   const details = stored?.customer_details as CustomerDetails | null;
   const email = details?.billing.email ?? session.customer_details?.email;
   if (!email || session.currency !== "eur") throw new Error("Invalid payment");
-  const delivery =
-    details?.shipping ??
-    address(session.collected_information?.shipping_details);
   const billing = details?.billing ?? address(session.customer_details);
-  if (delivery.country !== "MT")
-    throw new Error("Unsupported delivery country");
+  // Courses are not shipped: the order keeps the billing address.
+  const delivery = details?.shipping ?? billing;
   const customer = await customerFor(db, email, billing);
   const result = await db.rpc("complete_shop_checkout", {
     checkout_id: id,
@@ -224,14 +221,11 @@ export async function sendOrderEmails(db: Admin, checkoutId: string) {
     .eq("id", c.order_id)
     .single();
   if (!order) return;
-  const delivery = order.shipping_address as Record<string, string>;
+  const billing = order.billing_address as Record<string, string>;
   const prefix = c.livemode ? "" : "[TEST] ";
   const content = {
     heading: `Order #${order.number}`,
-    paragraphs: [
-      "Thank you for your order. We have received your payment.",
-      order.shipping_method,
-    ],
+    paragraphs: ["Thank you for your booking. We have received your payment."],
     rows: [
       ...order.items.map((i) => ({
         label: `${i.quantity} × ${i.name} ${[
@@ -240,15 +234,14 @@ export async function sendOrderEmails(db: Admin, checkoutId: string) {
         ].join(" / ")}`.trim(),
         value: formatPrice(i.total_cents),
       })),
-      { label: "Delivery", value: formatPrice(order.shipping_cents) },
       {
         label: "Total (includes 18% VAT)",
         value: formatPrice(order.total_cents),
       },
       { label: "VAT included", value: formatPrice(order.vat_cents) },
       {
-        label: "Delivery address",
-        value: Object.values(delivery ?? {})
+        label: "Billing details",
+        value: Object.values(billing ?? {})
           .filter(Boolean)
           .join(", "),
       },

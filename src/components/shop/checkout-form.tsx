@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { formatPrice } from "@/lib/format";
 import { useCart } from "./cart";
-import { lineDetails, shippingCost, type Shipping } from "./cart-page";
+import { lineDetails } from "./cart-page";
 import { WooNotice } from "./woo-notice";
 
 const input =
@@ -153,31 +153,22 @@ function AddressFields({
   );
 }
 
-// WooCommerce checkout: billing details (and an optional delivery address)
-// on the left, "Your order" with totals and "Place order" on the right.
-// Placing the order reserves the stock and opens Stripe for the card payment.
-export function CheckoutForm({
-  shipping,
-  email,
-}: {
-  shipping: Shipping;
-  email?: string;
-}) {
+// WooCommerce checkout: billing details on the left (courses are booked,
+// not shipped), "Your order" with totals and "Place order" on the right.
+// Placing the order reserves the seats and opens Stripe for the card payment.
+export function CheckoutForm({ email }: { email?: string }) {
   const { items } = useCart();
   const [billing, setBilling] = useState<Fields>({ email: email ?? "" });
-  const [delivery, setDelivery] = useState<Fields>({});
-  const [elsewhere, setElsewhere] = useState(false);
   const [note, setNote] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const subtotal = items.reduce((n, i) => n + i.price * i.quantity, 0);
-  const shippingCents = shippingCost(shipping, subtotal);
 
   if (!items.length)
     return (
       <>
         <WooNotice tone="info">Your cart is currently empty.</WooNotice>
-        <Link href="/shop/" className="shop-button">
+        <Link href="/#courses" className="shop-button">
           Return to shop
         </Link>
       </>
@@ -199,12 +190,7 @@ export function CheckoutForm({
             options: i.options,
             addons: (i.addons ?? []).map((a) => a.id),
           })),
-          details: {
-            billing,
-            shipping: delivery,
-            ship_elsewhere: elsewhere,
-            note,
-          },
+          details: { billing, note },
         }),
       });
       const result = await response.json();
@@ -234,23 +220,6 @@ export function CheckoutForm({
           onChange={(k, v) => setBilling({ ...billing, [k]: v })}
           email
         />
-        <label className="border-line mt-6 flex items-center gap-2 border-b pb-6 text-sm">
-          <input
-            type="checkbox"
-            checked={elsewhere}
-            onChange={(e) => setElsewhere(e.target.checked)}
-          />
-          Ship to a different address?
-        </label>
-        {elsewhere && (
-          <div className="mt-6">
-            <AddressFields
-              prefix="shipping"
-              values={delivery}
-              onChange={(k, v) => setDelivery({ ...delivery, [k]: v })}
-            />
-          </div>
-        )}
         <p className="mt-6">
           <label htmlFor="order_comments" className={labelText}>
             Order notes <span>(optional)</span>
@@ -260,7 +229,7 @@ export function CheckoutForm({
             rows={2}
             value={note}
             onChange={(e) => setNote(e.target.value)}
-            placeholder="Notes about your order, e.g. special notes for delivery."
+            placeholder="Notes about your order."
             className={input}
           />
         </p>
@@ -294,17 +263,9 @@ export function CheckoutForm({
             <span>Subtotal</span>
             <span>{formatPrice(subtotal)}</span>
           </p>
-          <p className={row}>
-            <span>Shipping</span>
-            <span className="text-right">
-              {shippingCents === 0
-                ? "Free Delivery (Malta & Gozo)"
-                : `Malta & Gozo: ${formatPrice(shippingCents)}`}
-            </span>
-          </p>
           <p className={`${row} font-black`}>
             <span>Total</span>
-            <span>{formatPrice(subtotal + shippingCents)}</span>
+            <span>{formatPrice(subtotal)}</span>
           </p>
         </div>
         <p className="mt-6 text-sm">
@@ -319,7 +280,7 @@ export function CheckoutForm({
         <button
           type="submit"
           disabled={busy}
-          className="bg-brand hover:bg-brand-dark mt-4 w-full rounded-lg py-2.5 text-[22px] text-white transition-colors disabled:opacity-60"
+          className="shop-button mt-4 w-full py-3"
         >
           {busy ? "Processing…" : "Place order"}
         </button>

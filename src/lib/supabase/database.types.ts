@@ -554,6 +554,7 @@ export type Database = {
           id: string;
           image_media_id: string | null;
           manage_stock: boolean;
+          backorders: boolean;
           option_values: Json;
           price_cents: number;
           product_id: string;
@@ -570,6 +571,7 @@ export type Database = {
           id?: string;
           image_media_id?: string | null;
           manage_stock?: boolean;
+          backorders?: boolean;
           option_values?: Json;
           price_cents: number;
           product_id: string;
@@ -586,6 +588,7 @@ export type Database = {
           id?: string;
           image_media_id?: string | null;
           manage_stock?: boolean;
+          backorders?: boolean;
           option_values?: Json;
           price_cents?: number;
           product_id?: string;
@@ -618,6 +621,13 @@ export type Database = {
         Row: {
           addons: Json;
           contact_button: boolean;
+          backorders: boolean;
+          cross_sell_ids: string[];
+          details: Json;
+          details_background_media_id: string | null;
+          hide_stock_status: boolean;
+          stock_messages: Json;
+          upsell_ids: string[];
           created_at: string;
           description: string;
           featured_media_id: string | null;
@@ -641,6 +651,13 @@ export type Database = {
         Insert: {
           addons?: Json;
           contact_button?: boolean;
+          backorders?: boolean;
+          cross_sell_ids?: string[];
+          details?: Json;
+          details_background_media_id?: string | null;
+          hide_stock_status?: boolean;
+          stock_messages?: Json;
+          upsell_ids?: string[];
           created_at?: string;
           description?: string;
           featured_media_id?: string | null;
@@ -664,6 +681,13 @@ export type Database = {
         Update: {
           addons?: Json;
           contact_button?: boolean;
+          backorders?: boolean;
+          cross_sell_ids?: string[];
+          details?: Json;
+          details_background_media_id?: string | null;
+          hide_stock_status?: boolean;
+          stock_messages?: Json;
+          upsell_ids?: string[];
           created_at?: string;
           description?: string;
           featured_media_id?: string | null;

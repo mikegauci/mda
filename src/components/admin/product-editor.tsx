@@ -26,15 +26,30 @@ export const blankProduct: ProductInput = {
   seo: {},
   gallery: [],
   variants: [],
+  backorders: false,
+  hide_stock_status: false,
+  stock_messages: {},
+  details: [],
+  details_background_media_id: null,
+  upsell_ids: [],
+  cross_sell_ids: [],
 };
+const STOCK_MESSAGES = [
+  ["in_stock", "Seats left (%s is the number)", "%s seats available"],
+  ["low_stock", "One seat left", "Only 1 seat available"],
+  ["backorder", "No seats, booking allowed", "Available next course"],
+  ["out_of_stock", "Course full", "Course full. Check again soon!"],
+] as const;
 const field = "w-full rounded border border-black/20 bg-white p-2 text-sm";
 const panel = "space-y-4 rounded-lg bg-white p-5 shadow-sm";
 export function ProductEditor({
   initial,
   media = [],
+  courses = [],
 }: {
   initial: ProductInput;
   media?: PickedMedia[];
+  courses?: { id: string; name: string }[];
 }) {
   const [p, setP] = useState(initial);
   const [images, setImages] = useState(media);
@@ -71,7 +86,7 @@ export function ProductEditor({
   const stockFields = (
     object: Pick<
       ProductInput,
-      "stock_status" | "manage_stock" | "stock_quantity"
+      "stock_status" | "manage_stock" | "stock_quantity" | "backorders"
     >,
     update: (value: Partial<typeof object>) => void,
   ) => (
@@ -98,7 +113,15 @@ export function ProductEditor({
           checked={object.manage_stock}
           onChange={(e) => update({ manage_stock: e.target.checked })}
         />
-        Track quantity
+        Track seats
+      </label>
+      <label className="flex items-center gap-2 text-sm">
+        <input
+          type="checkbox"
+          checked={object.backorders}
+          onChange={(e) => update({ backorders: e.target.checked })}
+        />
+        Allow booking when full
       </label>
       <label className="text-sm">
         Quantity
@@ -338,6 +361,7 @@ export function ProductEditor({
                     manage_stock: false,
                     stock_quantity: null,
                     stock_status: "in_stock",
+                    backorders: false,
                     image_media_id: null,
                   },
                 ],
@@ -346,6 +370,138 @@ export function ProductEditor({
           >
             Add variant
           </button>
+        </section>
+        <section className={panel}>
+          <h2 className="font-bold">Course details panel</h2>
+          <p className="text-muted text-sm">
+            The icon list on the course page, shown on the background photo.
+            Each line may use links (HTML).
+          </p>
+          <MediaField
+            label="Background photo"
+            value={
+              images.find((m) => m.id === p.details_background_media_id) ?? null
+            }
+            onChange={(m) => {
+              if (m) setImages([...images, m]);
+              set({ details_background_media_id: m?.id ?? null });
+            }}
+          />
+          {p.details.map((d, i) => {
+            const patch = (value: Partial<typeof d>) =>
+              set({
+                details: p.details.map((old, j) =>
+                  j === i ? { ...old, ...value } : old,
+                ),
+              });
+            return (
+              <div
+                key={i}
+                className="grid gap-3 border-t border-black/15 pt-4 sm:grid-cols-[200px_1fr]"
+              >
+                <MediaField
+                  label={`Icon ${i + 1}`}
+                  value={images.find((m) => m.id === d.icon_media_id) ?? null}
+                  onChange={(m) => {
+                    if (m) setImages([...images, m]);
+                    patch({ icon_media_id: m?.id ?? null });
+                  }}
+                />
+                <label className="text-sm">
+                  Text
+                  <input
+                    className={field}
+                    value={d.html}
+                    onChange={(e) => patch({ html: e.target.value })}
+                  />
+                  <button
+                    type="button"
+                    className="text-coral mt-2 text-sm"
+                    onClick={() =>
+                      set({ details: p.details.filter((_, j) => j !== i) })
+                    }
+                  >
+                    Remove line
+                  </button>
+                </label>
+              </div>
+            );
+          })}
+          <button
+            type="button"
+            className="text-sm underline"
+            onClick={() =>
+              set({
+                details: [...p.details, { icon_media_id: null, html: "" }],
+              })
+            }
+          >
+            Add line
+          </button>
+        </section>
+        <section className={panel}>
+          <h2 className="font-bold">Seat texts</h2>
+          <label className="flex gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={p.hide_stock_status}
+              onChange={(e) => set({ hide_stock_status: e.target.checked })}
+            />
+            Hide the seats text
+          </label>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {STOCK_MESSAGES.map(([key, label, placeholder]) => (
+              <label key={key} className="text-sm">
+                {label}
+                <input
+                  className={field}
+                  value={p.stock_messages[key] ?? ""}
+                  placeholder={placeholder}
+                  onChange={(e) =>
+                    set({
+                      stock_messages: {
+                        ...p.stock_messages,
+                        [key]: e.target.value,
+                      },
+                    })
+                  }
+                />
+              </label>
+            ))}
+          </div>
+        </section>
+        <section className={panel}>
+          <h2 className="font-bold">Linked courses</h2>
+          {(
+            [
+              ["upsell_ids", "You may also like (course page)"],
+              ["cross_sell_ids", "Cross-sells (cart)"],
+            ] as const
+          ).map(([key, label]) => (
+            <fieldset key={key} className="text-sm">
+              <legend className="mb-2">{label}</legend>
+              <div className="grid gap-1 sm:grid-cols-2">
+                {courses
+                  .filter((c) => c.id !== p.id)
+                  .map((c) => (
+                    <label key={c.id} className="flex gap-2">
+                      <input
+                        type="checkbox"
+                        checked={p[key].includes(c.id)}
+                        onChange={(e) =>
+                          set({
+                            [key]: e.target.checked
+                              ? [...p[key], c.id]
+                              : p[key].filter((id) => id !== c.id),
+                          })
+                        }
+                      />
+                      {c.name}
+                    </label>
+                  ))}
+              </div>
+            </fieldset>
+          ))}
         </section>
         <section className={panel}>
           <h2 className="font-bold">Gallery</h2>
@@ -383,7 +539,7 @@ export function ProductEditor({
             <input
               className={field}
               value={p.seo.title ?? ""}
-              placeholder={`${p.name} | Malta Detailing Academy`}
+              placeholder={`${p.name} - Malta Detailing Academy`}
               onChange={(e) =>
                 set({ seo: { ...p.seo, title: e.target.value } })
               }

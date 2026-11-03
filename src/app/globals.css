@@ -24,14 +24,14 @@
   }
 
   body {
-    @apply text-body bg-white font-sans font-medium;
+    @apply text-body bg-white font-sans font-light;
     font-size: 16px;
     line-height: 1.65;
   }
 
   b,
   strong {
-    font-weight: 900;
+    font-weight: 700;
   }
 
   /* Highlighted words in the WordPress content (<mark> with the brand colour). */
@@ -41,17 +41,24 @@
 }
 
 @layer components {
-  /* Thin section title with a short green rule under it ("Our journey & values"). */
+  /* Spectra headings: lowercase Black ("courses", "time to detail"). */
   .section-title {
-    @apply border-brand inline-block border-b pb-0.5 text-[26px] leading-[1.3] font-extralight md:text-[30px];
+    @apply text-[32px] leading-[1.3] font-bold lowercase;
   }
 
+  /* The hero's outline pill ("view courses"); black on hover. */
   .bf-button {
-    @apply bg-brand hover:bg-brand-dark inline-block rounded-lg px-5 py-2.5 text-[22px] leading-none font-medium text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50;
+    @apply inline-flex items-center gap-3 rounded-[50px] border border-white px-5 py-2.5 text-base leading-none font-light text-white lowercase transition-colors hover:bg-black disabled:cursor-not-allowed disabled:opacity-50;
   }
 
+  /* WooCommerce's outline pill ("add to cart", "select options"). */
+  .pill-button {
+    @apply inline-flex items-center justify-center rounded-[30px] border border-black px-5 py-2.5 text-base leading-none font-light text-black lowercase transition-colors hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-black;
+  }
+
+  /* WooCommerce buttons: Astra's black button with white text. */
   .shop-button {
-    @apply bg-brand hover:bg-brand-dark inline-block rounded-lg px-5 py-2.5 text-xl leading-none font-medium text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50;
+    @apply inline-block rounded-[2px] bg-black px-5 py-2.5 text-base leading-none font-medium text-white lowercase transition-colors hover:bg-[#3b3b3b] disabled:cursor-not-allowed disabled:opacity-50;
   }
 }
 
@@ -65,22 +72,22 @@
     @apply hidden;
   }
   .prose-bf a {
-    @apply text-brand underline;
+    @apply underline;
   }
   .prose-bf h2,
   .prose-bf h3,
   .prose-bf h4 {
-    @apply mt-6 mb-3 font-black;
+    @apply mt-6 mb-3 font-bold lowercase;
   }
   .prose-bf h2 {
-    @apply text-[26px] leading-tight;
+    @apply mt-0 mb-[22px] text-[32px] leading-[1.3];
   }
   .prose-bf h3 {
     @apply text-[22px] leading-tight;
   }
   .prose-bf ul,
   .prose-bf ol {
-    @apply mb-4 ml-12 list-outside;
+    @apply mb-4 ml-10 list-outside;
   }
   .prose-bf ul {
     @apply list-disc;
@@ -89,7 +96,12 @@
     @apply list-decimal;
   }
   .prose-bf li {
-    @apply mb-4;
+    @apply mb-2.5;
+  }
+  /* Course descriptions: each numbered step's title sits on its own line
+     (WordPress turned the line break after it into <br>). */
+  .prose-bf .numbered-steps li > strong:first-child {
+    @apply block;
   }
   .prose-bf img {
     @apply h-auto max-w-full;

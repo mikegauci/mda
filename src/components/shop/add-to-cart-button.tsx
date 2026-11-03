@@ -13,7 +13,7 @@ export function AddToCartButton({ product: p }: { product: Product }) {
     <div className="flex flex-wrap items-center gap-3">
       <button
         type="button"
-        className="shop-button"
+        className="pill-button"
         onClick={() => {
           add({
             productId: p.id,
@@ -31,7 +31,7 @@ export function AddToCartButton({ product: p }: { product: Product }) {
         Add to cart
       </button>
       {done && (
-        <Link href="/cart/" className="text-brand underline">
+        <Link href="/cart/" className="underline">
           View cart
         </Link>
       )}

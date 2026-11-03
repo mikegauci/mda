@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-// Astra's "Scroll to Top" button: a small green square in the bottom right,
+// Astra's "Scroll to Top" button: a small black square in the bottom right,
 // shown once the page has scrolled past the first screen.
 export function ScrollTop() {
   const [visible, setVisible] = useState(false);
@@ -16,7 +16,7 @@ export function ScrollTop() {
     <button
       type="button"
       onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-      className={`bg-brand fixed right-[30px] bottom-[30px] z-50 grid size-[31.5px] place-items-center rounded-[2px] text-white transition-opacity ${
+      className={`fixed right-[30px] bottom-[30px] z-50 grid size-[31.5px] place-items-center rounded-[2px] bg-black text-white transition-opacity ${
         visible ? "opacity-100" : "pointer-events-none opacity-0"
       }`}
       aria-label="Scroll to Top"
