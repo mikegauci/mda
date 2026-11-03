@@ -75,17 +75,17 @@ export class Context {
   }
 
   // Rewrites WordPress HTML: drops block comments, moves uploads to Storage
-  // URLs (registering each file) and makes batteryfactory.mt links relative.
+  // URLs (registering each file) and makes mda.mt links relative.
   html(input: string | null | undefined): string {
     if (!input) return "";
     let out = input.replace(/<!--\s*\/?wp:[\s\S]*?-->/g, "");
     out = out.replace(/\s(srcset|sizes)="[^"]*"/g, "");
     out = out.replace(
-      /(?:https?:)?\/\/(?:www\.)?batteryfactory\.mt\/wp-content\/uploads\/([^"'\s)<>]+)/g,
+      /(?:https?:)?\/\/(?:www\.)?mda\.mt\/wp-content\/uploads\/([^"'\s)<>]+)/g,
       (match, rel: string) => this.media.byUrl(rel)?.url ?? match,
     );
     out = out.replace(
-      /https?:\/\/(?:www\.)?batteryfactory\.mt(\/[^"'\s<>]*)?/g,
+      /https?:\/\/(?:www\.)?mda\.mt(\/[^"'\s<>]*)?/g,
       (_m, p?: string) => p || "/",
     );
     return out.replace(/\n{3,}/g, "\n\n").trim();

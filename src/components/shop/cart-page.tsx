@@ -39,7 +39,7 @@ export function CartPage() {
     return (
       <>
         <WooNotice tone="info">Your cart is currently empty.</WooNotice>
-        <Link href="/shop/" className="shop-button">
+        <Link href="/#courses" className="shop-button">
           Return to shop
         </Link>
       </>

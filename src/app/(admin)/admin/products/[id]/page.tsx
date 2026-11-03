@@ -19,15 +19,18 @@ export default async function Page({
     .maybeSingle();
   if (error) throw error;
   if (!p) notFound();
+  const details = (p.details ?? []) as ProductInput["details"];
   const ids = [
     p.featured_media_id,
+    p.details_background_media_id,
+    ...details.map((d) => d.icon_media_id),
     ...p.variants.map((v) => v.image_media_id),
     ...p.gallery.map((v) => v.media_id),
   ].filter((v): v is string => !!v);
-  const { data: media } = await db
-    .from("media")
-    .select("id,path,width,height,alt")
-    .in("id", ids);
+  const [{ data: media }, { data: courses }] = await Promise.all([
+    db.from("media").select("id,path,width,height,alt").in("id", ids),
+    db.from("products").select("id,name").order("name"),
+  ]);
   return (
     <>
       <AdminPageHeader
@@ -39,11 +42,14 @@ export default async function Page({
           ...p,
           options: p.options as ProductInput["options"],
           seo: p.seo as ProductInput["seo"],
+          details,
+          stock_messages: p.stock_messages as ProductInput["stock_messages"],
           gallery: p.gallery
             .sort((a, b) => a.sort_order - b.sort_order)
             .map((v) => v.media_id),
         }}
         media={media ?? []}
+        courses={courses ?? []}
       />
     </>
   );

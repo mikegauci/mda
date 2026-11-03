@@ -3,7 +3,7 @@ import Link from "next/link";
 import { SiteShell } from "@/components/layout/site-shell";
 
 export const metadata: Metadata = {
-  title: { absolute: "Page not found | Malta Detailing Academy" },
+  title: { absolute: "Page not found - Malta Detailing Academy" },
   robots: { index: false },
 };
 

@@ -131,9 +131,7 @@ async function saveSiteSettingsWork(form: FormData) {
     "contactEmail",
     "phone",
     "Facebook",
-    "YouTube",
     "Instagram",
-    "LinkedIn",
   ];
   const value = Object.fromEntries(
     fields.map((k) => [
@@ -143,7 +141,7 @@ async function saveSiteSettingsWork(form: FormData) {
         .slice(0, 2000),
     ]),
   );
-  for (const k of ["Facebook", "YouTube", "Instagram", "LinkedIn"]) {
+  for (const k of ["Facebook", "Instagram"]) {
     if (value[k] && !/^https:\/\/[^\s]+$/.test(value[k]))
       throw Error("Social links must use https://.");
   }
@@ -156,11 +154,17 @@ async function saveSiteSettingsWork(form: FormData) {
   if (
     value.navigation &&
     value.navigation.split("\n").some((line) => {
-      const [label, href, ...rest] = line.split("|").map((s) => s.trim());
+      if (!line.trim()) return false;
+      const [label, href, ...rest] = line
+        .replace(/^\s*-\s*/, "")
+        .split("|")
+        .map((s) => s.trim());
       return rest.length || !label || !/^\/(?!\/)[^\s]*$/.test(href);
     })
   )
-    throw Error("Use one Label | /path/ navigation entry per line.");
+    throw Error(
+      "Use one Label | /path/ navigation entry per line; start dropdown items with -.",
+    );
   const { error } = await db.from("settings").upsert({ key: "site", value });
   if (error) throw error;
   updateTag("site-settings");

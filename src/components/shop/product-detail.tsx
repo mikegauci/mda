@@ -1,16 +1,16 @@
 "use client";
 import Image from "next/image";
-import Link from "next/link";
 import { useState } from "react";
 import { mediaUrl } from "@/lib/media";
 import { formatPrice } from "@/lib/format";
 import {
   addonsOf,
-  available,
+  bookable,
   hasPrice,
   price,
   priceLabel,
-  type Category,
+  seatsMessage,
+  type CourseDetail,
   type Product,
 } from "@/lib/shop-types";
 import { useCart } from "./cart";
@@ -18,20 +18,17 @@ import { ProductPlaceholder } from "./product-placeholder";
 import { WooNotice } from "./woo-notice";
 
 const select =
-  "focus:border-brand w-full appearance-none border border-[#d1d5db] bg-white bg-[length:18px] bg-[right_12px_center] bg-no-repeat px-2.5 py-2 text-[15px] font-normal text-muted focus:outline-none";
+  "w-full appearance-none rounded-[3px] border border-[#e2e8f0] bg-white p-2 pr-8 text-base font-light text-[#666] focus:border-black focus:outline-none";
 
-// The WooCommerce single product layout: gallery on the left; breadcrumb,
-// category, title, price, description, options and add to cart on the right.
+// The live course page: gallery on the left; title, short description, the
+// details panel (icons on a darkened photo), price, the "Date & Time" choice
+// with seats left, quantity and "add to cart" on the right.
 export function ProductDetail({
   product: p,
-  breadcrumb,
-  category,
-  whatsappUrl,
+  iconPaths,
 }: {
   product: Product;
-  breadcrumb: Category[];
-  category: Category | null;
-  whatsappUrl: string;
+  iconPaths: Record<string, string>;
 }) {
   const [selection, setSelection] = useState<Record<string, string>>({});
   const [chosen, setChosen] = useState<string[]>([]);
@@ -40,23 +37,20 @@ export function ProductDetail({
   const { add, added } = useCart();
   const options = p.options as { name: string; values: string[] }[];
   const addons = addonsOf(p);
+  const details = (Array.isArray(p.details) ? p.details : []) as CourseDetail[];
   const complete = options.every((o) => selection[o.name]);
   const variant = complete
-    ? [...p.variants]
+    ? ([...p.variants]
         .sort((a, b) => a.sort_order - b.sort_order)
         .find((v) =>
           Object.entries(v.option_values as Record<string, string>).every(
             ([k, v]) => !v || selection[k] === v,
           ),
-        )
+        ) ?? null)
     : null;
   const variable = p.variants.length > 0;
   const base = variable ? variant : p;
-  const ready =
-    !!base &&
-    hasPrice(base) &&
-    available(p, quantity) &&
-    available(base, quantity);
+  const ready = !!base && hasPrice(base) && bookable(p, variant, quantity);
   const addonTotal = addons
     .filter((a) => chosen.includes(a.id))
     .reduce((n, a) => n + a.price_cents, 0);
@@ -68,9 +62,14 @@ export function ProductDetail({
   ].filter((i) => i !== null);
   const image = photo ?? variant?.image?.path ?? p.image?.path;
   const priceText = priceLabel(p, formatPrice);
-  const purchasable = !variable
-    ? hasPrice(p) && available(p)
-    : p.variants.some(hasPrice);
+  const purchasable = variable
+    ? p.variants.some(hasPrice)
+    : hasPrice(p) && bookable(p, null);
+  const seats = variable
+    ? variant
+      ? seatsMessage(p, variant)
+      : ""
+    : seatsMessage(p, null);
 
   return (
     <>
@@ -79,7 +78,7 @@ export function ProductDetail({
           “{p.name}” has been added to your cart.
         </WooNotice>
       )}
-      <div className="grid gap-12 md:grid-cols-2 lg:grid-cols-[600px_1fr]">
+      <div className="grid gap-x-[39px] gap-y-8 md:grid-cols-[492fr_453fr]">
         <div>
           <div className="relative">
             {image ? (
@@ -89,7 +88,7 @@ export function ProductDetail({
                 priority
                 src={mediaUrl(image)}
                 alt={p.image?.alt || p.name}
-                sizes="(min-width: 768px) 600px, 100vw"
+                sizes="(min-width: 768px) 492px, 100vw"
                 className="aspect-square w-full object-cover"
               />
             ) : (
@@ -109,10 +108,10 @@ export function ProductDetail({
                     cy="10.5"
                     r="6.5"
                     fill="none"
-                    stroke="#424142"
+                    stroke="#3b3b3b"
                     strokeWidth="2"
                   />
-                  <path d="m15.5 15.5 5 5" stroke="#424142" strokeWidth="2" />
+                  <path d="m15.5 15.5 5 5" stroke="#3b3b3b" strokeWidth="2" />
                 </svg>
               </a>
             )}
@@ -145,53 +144,69 @@ export function ProductDetail({
         </div>
 
         <div>
-          <nav aria-label="Breadcrumb" className="text-muted text-sm">
-            <Link href="/" className="hover:text-brand">
-              Home
-            </Link>
-            {breadcrumb.map((c) => (
-              <span key={c.id}>
-                {" / "}
-                <Link
-                  href={`/product-category/${c.slug}/`}
-                  className="hover:text-brand"
-                >
-                  {c.name}
-                </Link>
-              </span>
-            ))}
-            {" / "}
-            {p.name}
-          </nav>
-          {category && (
-            <Link
-              href={`/product-category/${category.slug}/`}
-              className="text-brand mt-4 block w-fit"
-            >
-              {category.name}
-            </Link>
-          )}
-          <h1 className="text-ink border-brand mt-3 w-fit border-b text-xl leading-[1.4] font-black">
+          <h1 className="mb-[13px] text-[26px] leading-[1.2] font-bold lowercase">
             {p.name}
           </h1>
-          {priceText && !variable && (
-            <p className="text-ink mt-5 text-2xl font-black">{priceText}</p>
-          )}
-          {priceText && variable && !p.short_description && (
-            <p className="text-ink mt-5 text-2xl font-black">{priceText}</p>
-          )}
           {p.short_description && (
             <div
-              className="prose-bf mt-4 leading-[1.65]"
+              className="prose-bf"
               dangerouslySetInnerHTML={{ __html: p.short_description }}
             />
           )}
 
+          {details.length > 0 && (
+            <div className="relative mt-4 mb-10 bg-cover bg-center p-5 text-white">
+              {p.details_background && (
+                <Image
+                  src={mediaUrl(p.details_background.path)}
+                  alt=""
+                  fill
+                  sizes="453px"
+                  className="object-cover"
+                />
+              )}
+              <div className="absolute inset-0 bg-black/[0.52]" />
+              <ul className="relative">
+                {details.map((d, i) => (
+                  <li
+                    key={i}
+                    className="mb-[18px] flex items-center gap-4 font-medium last:mb-0"
+                  >
+                    {d.icon_media_id && iconPaths[d.icon_media_id] ? (
+                      // eslint-disable-next-line @next/next/no-img-element -- SVG icon from the media library
+                      <img
+                        src={mediaUrl(iconPaths[d.icon_media_id])}
+                        alt=""
+                        width={30}
+                        height={30}
+                        className="size-[30px] shrink-0"
+                      />
+                    ) : (
+                      <span className="size-[30px] shrink-0" />
+                    )}
+                    <span
+                      className="lowercase [&_a]:text-white [&_a]:underline"
+                      dangerouslySetInnerHTML={{ __html: d.html }}
+                    />
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {priceText && (
+            <p className="mb-[25px] text-2xl leading-[1.1] font-bold">
+              {variant && hasPrice(variant)
+                ? formatPrice(price(variant))
+                : priceText}
+            </p>
+          )}
+
           {purchasable && (
-            <div className="mt-8">
+            <div>
               {options.map((o) => (
                 <label key={o.name} className="mb-4 block">
-                  <span className="mb-2 block text-sm font-black">
+                  <span className="mb-3 block leading-5 font-bold lowercase">
                     {o.name}
                   </span>
                   <span className="relative block">
@@ -221,7 +236,7 @@ export function ProductDetail({
                       <path
                         d="m5 8 5 5 5-5"
                         fill="none"
-                        stroke="#424142"
+                        stroke="#3b3b3b"
                         strokeWidth="1.6"
                       />
                     </svg>
@@ -232,20 +247,10 @@ export function ProductDetail({
                 <button
                   type="button"
                   onClick={() => setSelection({})}
-                  className="text-brand mb-2 text-sm"
+                  className="mb-2 text-sm underline"
                 >
                   Clear
                 </button>
-              )}
-              {variable && complete && variant && (
-                <p className="text-ink mb-4 text-2xl font-black">
-                  {hasPrice(variant) ? formatPrice(price(variant)) : ""}
-                  {!available(variant) && (
-                    <span className="text-coral block text-base font-medium">
-                      Out of stock
-                    </span>
-                  )}
-                </p>
               )}
               {variable && complete && !variant && (
                 <p className="mb-4">
@@ -253,8 +258,15 @@ export function ProductDetail({
                   combination.
                 </p>
               )}
+              {seats && (
+                <p
+                  className={`mb-4 ${variant && !bookable(p, variant) ? "text-coral" : "text-[#77a464]"}`}
+                >
+                  {seats}
+                </p>
+              )}
               {addons.length > 0 && (
-                <div className="border-line mt-2 space-y-1.5 border-t pt-6 text-[15px] font-normal">
+                <div className="mt-2 space-y-1.5 border-t border-[#e2e8f0] pt-6">
                   {addons.map((a) => (
                     <label key={a.id} className="flex items-start gap-2">
                       <input
@@ -280,17 +292,29 @@ export function ProductDetail({
                 </div>
               )}
               <div
-                className={`flex flex-wrap items-center gap-5 ${
+                className={`flex items-center gap-4 ${
                   options.length || addons.length
-                    ? "border-line mt-6 border-t pt-8"
+                    ? "mt-6 border-t border-[#e2e8f0] pt-3"
                     : ""
                 }`}
               >
-                <Quantity value={quantity} onChange={setQuantity} />
+                <input
+                  type="number"
+                  min="1"
+                  max="99"
+                  aria-label={`${p.name} quantity`}
+                  value={quantity}
+                  onChange={(e) =>
+                    setQuantity(
+                      Math.max(1, Math.min(99, Number(e.target.value) || 1)),
+                    )
+                  }
+                  className="ml-[38px] h-[38px] w-[42px] border border-[#e2e8f0] text-center text-[#666]"
+                />
                 <button
                   type="button"
                   disabled={!ready}
-                  className="shop-button disabled:opacity-50"
+                  className="pill-button flex-1"
                   onClick={() => {
                     if (!base) return;
                     add({
@@ -315,45 +339,17 @@ export function ProductDetail({
                 >
                   Add to cart
                 </button>
-                {p.contact_button && (
-                  <a
-                    href={whatsappUrl}
-                    target="_blank"
-                    rel="noopener"
-                    className="shop-button"
-                  >
-                    Contact us now
-                  </a>
-                )}
               </div>
             </div>
           )}
-          {!purchasable && p.contact_button && (
-            <a
-              href={whatsappUrl}
-              target="_blank"
-              rel="noopener"
-              className="shop-button mt-8"
-            >
-              Contact us now
-            </a>
-          )}
-          {!purchasable && !variable && !available(p) && (
-            <p className="text-coral mt-6">Out of stock</p>
-          )}
+          {!purchasable && seats && <p className="text-coral mt-6">{seats}</p>}
         </div>
       </div>
-      {p.description && (
-        <div
-          className="prose-bf border-line mt-14 border-t pt-8"
-          dangerouslySetInnerHTML={{ __html: p.description }}
-        />
-      )}
     </>
   );
 }
 
-// WooCommerce's quantity box with "-" and "+" buttons.
+// WooCommerce's quantity box with "-" and "+" buttons (used in the cart).
 export function Quantity({
   value,
   onChange,
@@ -365,7 +361,7 @@ export function Quantity({
 }) {
   const set = (n: number) => onChange(Math.max(1, Math.min(99, n || 1)));
   const button =
-    "grid h-10 w-[38px] place-items-center border border-[#d1d5db] text-sm";
+    "grid h-10 w-[38px] place-items-center border border-[#e2e8f0] text-sm";
   return (
     <span className="inline-flex">
       <button
@@ -383,7 +379,7 @@ export function Quantity({
         aria-label={label}
         value={value}
         onChange={(e) => set(Number(e.target.value))}
-        className="h-10 w-10 [appearance:textfield] border-y border-[#d1d5db] text-center text-sm [&::-webkit-inner-spin-button]:appearance-none"
+        className="h-10 w-10 [appearance:textfield] border-y border-[#e2e8f0] text-center text-sm [&::-webkit-inner-spin-button]:appearance-none"
       />
       <button
         type="button"

@@ -106,9 +106,7 @@ export default async function Tools({
           "contactEmail",
           "phone",
           "Facebook",
-          "YouTube",
           "Instagram",
-          "LinkedIn",
         ].map((key) => (
           <label key={key} className="block text-sm">
             {key}
@@ -116,7 +114,9 @@ export default async function Tools({
               rows={key === "navigation" ? 8 : 2}
               aria-label={key}
               placeholder={
-                key === "navigation" ? "Home | /\nShop | /shop/" : undefined
+                key === "navigation"
+                  ? "About | /#about\nCourses | /#courses\n- Basic Polishing | /product/basic-polishing/"
+                  : undefined
               }
               className={`${input} mt-1 block w-full`}
               name={key}

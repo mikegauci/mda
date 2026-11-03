@@ -7,9 +7,9 @@ import { decodeEntities } from "../lib/wp.ts";
 function yoastTitle(template: string, title: string): string {
   return decodeEntities(template)
     .replace(/%%title%%/g, title)
-    .replace(/%%sitename%%/g, "Battery Factory")
-    .replace(/%%sitedesc%%/g, "Powering your future one battery at a time")
-    .replace(/%%sep%%/g, "|")
+    .replace(/%%sitename%%/g, "Malta Detailing Academy")
+    .replace(/%%sitedesc%%/g, "Malta Detailing Academy")
+    .replace(/%%sep%%/g, "-")
     .replace(/%%page%%/g, "")
     .replace(/%%[a-z_]+%%/g, "")
     .replace(/\s+/g, " ")
@@ -17,7 +17,7 @@ function yoastTitle(template: string, title: string): string {
 }
 
 // `seo.title` is the full browser title; it is only stored when it differs
-// from the default "<title> | Battery Factory".
+// from the default "<title> - Malta Detailing Academy".
 export function seoFrom(
   ctx: Context,
   meta: Map<string, string> | undefined,
@@ -29,7 +29,10 @@ export function seoFrom(
   const description = meta.get("_yoast_wpseo_metadesc");
   if (template) {
     const title = yoastTitle(template, decodeEntities(pageTitle));
-    if (title && title !== `${decodeEntities(pageTitle)} | Battery Factory`)
+    if (
+      title &&
+      title !== `${decodeEntities(pageTitle)} - Malta Detailing Academy`
+    )
       seo.title = title;
   }
   if (description && !description.includes("%%"))

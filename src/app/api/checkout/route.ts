@@ -11,10 +11,10 @@ import { env } from "@/lib/env";
 import { publicDb } from "@/lib/supabase/public";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getCurrentUser } from "@/lib/auth/session";
-import { PRODUCT_SELECT, getShopSettings, shippingFor } from "@/lib/shop";
+import { PRODUCT_SELECT, getShopSettings } from "@/lib/shop";
 import {
   addonsOf,
-  available,
+  bookable,
   hasPrice,
   price,
   type Product,
@@ -96,10 +96,8 @@ export async function POST(request: Request) {
       const v = p?.variants.find((v) => v.id === i.variantId);
       if (
         !p ||
-        !available(p, i.quantity) ||
-        (p.variants.length
-          ? !v || !available(v, i.quantity)
-          : i.variantId !== null) ||
+        (p.variants.length ? !v : i.variantId !== null) ||
+        !bookable(p, v ?? null, i.quantity) ||
         !hasPrice(v ?? p)
       )
         throw new Error("A product is unavailable. Please check your cart.");
@@ -139,13 +137,10 @@ export async function POST(request: Request) {
       };
     });
     const settings = await getShopSettings();
-    const subtotal = lines.reduce(
-      (n, l) => n + l.unit_price_cents * l.quantity,
-      0,
-    );
-    const shipping = shippingFor(settings, subtotal);
-    if (!shipping || !settings.prices_include_vat || settings.vat_rate !== 0.18)
-      throw new Error("Delivery is unavailable. Please contact us.");
+    if (!settings.prices_include_vat || settings.vat_rate !== 0.18)
+      throw new Error("Checkout is unavailable. Please contact us.");
+    // Courses are booked, not shipped.
+    const shipping = { label: "Course booking", price_cents: 0 };
     const user = await getCurrentUser();
     const id = randomUUID();
     const now = Date.now();
@@ -169,8 +164,8 @@ export async function POST(request: Request) {
       .update({ customer_details: details as unknown as Json })
       .eq("id", id);
     if (saved.error) throw new Error("Checkout failed. Please try again.");
-    // Billing and delivery are taken on our checkout page; Stripe only
-    // collects the card payment.
+    // Billing details are taken on our checkout page; Stripe only collects
+    // the card payment.
     const result = await createCheckoutSession(db, id, {
       mode: "payment",
       allowed_payment_method_types: ["card"],
@@ -179,15 +174,6 @@ export async function POST(request: Request) {
       client_reference_id: id,
       metadata: { checkout_id: id },
       expires_at: Math.floor(now / 1000) + SESSION_MINUTES * 60,
-      shipping_options: [
-        {
-          shipping_rate_data: {
-            display_name: shipping.label,
-            type: "fixed_amount",
-            fixed_amount: { amount: shipping.price_cents, currency: "eur" },
-          },
-        },
-      ],
       line_items: lines.map((i) => ({
         quantity: i.quantity,
         price_data: {

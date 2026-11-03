@@ -30,10 +30,7 @@ async function Receipt({
           : "We haven’t confirmed your payment yet. If you paid, please wait for your order email before trying again."}
       </p>
       {paid && <ClearPaidCart />}
-      <Link
-        href="/shop/"
-        className="shop-button mt-8"
-      >
+      <Link href="/#courses" className="shop-button mt-8">
         Continue shopping
       </Link>
     </div>

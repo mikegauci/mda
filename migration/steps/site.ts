@@ -1,24 +1,24 @@
-// Pages and redirects. The homepage, shop, cart, checkout and account pages
-// are rebuilt in code; only their title and Yoast SEO come along. Other pages
-// (Custom Battery Manufacturing) keep their HTML, edited in the CMS.
+// Pages, site settings and redirects. The homepage, cart, checkout and
+// account pages are rebuilt in code; only their title and Yoast SEO come
+// along. Other pages (About, Contact, Terms, Privacy) keep their HTML, edited
+// in the CMS. The unused Maintenance Page is dropped.
 import type { Context } from "../lib/context.ts";
 import { decodeEntities, wpDate } from "../lib/wp.ts";
+import { COURSE_TILE_COUNT, PAGE_FIELDS } from "../../src/lib/page-fields.ts";
 import { seoFrom } from "./seo.ts";
 
-const CODE_PAGES = new Set([
-  "shop-batteries-and-accessories",
-  "cart",
-  "checkout",
-  "my-account",
-]);
+const CODE_PAGES = new Set(["shop", "cart", "checkout", "my-account"]);
+const DROPPED_PAGES = new Set(["maintenance-page"]);
 
 export function importSite(ctx: Context) {
   const frontPage = ctx.wp.get(
     "select option_value from wp_options where option_name = 'page_on_front'",
   )?.option_value;
-  const pages = ctx.wp.all(
-    "select * from wp_posts where post_type = 'page' and post_parent = '0' and post_status = 'publish' order by cast(ID as integer)",
-  );
+  const pages = ctx.wp
+    .all(
+      "select * from wp_posts where post_type = 'page' and post_parent = '0' and post_status = 'publish' order by cast(ID as integer)",
+    )
+    .filter((p) => !DROPPED_PAGES.has(p.post_name!));
   const meta = ctx.wp.postMeta(pages.map((p) => p.ID!));
   const pageRows = pages.map((p) => {
     const isHome = p.ID === frontPage;
@@ -38,27 +38,82 @@ export function importSite(ctx: Context) {
   ctx.upsert("pages", pageRows, "id");
   ctx.count("pages", pageRows.map((p) => `/${p.path}`).join(", "));
 
-  // Images the homepage layout uses (its fields default to these paths).
-  for (const file of [
-    "2025/09/hero-section-batteries.jpg",
-    "2025/09/what-we-do.jpg",
-    "2025/09/custom-battery-manufacturing-icon.png",
-    "2025/09/battery-repair-and-refurbishment.png",
-    "2025/09/EV-conversions.png",
-    "2025/09/B2B-battery-solutions.png",
-    "2025/09/diagnostics-health-testing.png",
-    "2025/09/life-can-be-easier-banner.jpg",
-    "2025/09/life-can-be-easier-banner-mobile.jpg",
-  ])
-    ctx.media.byUrl(file);
+  // Media the homepage layout uses (its fields default to these paths).
+  const home = PAGE_FIELDS[""];
+  ctx.media.byUrl(home.heroVideo.value.replace(/^wp\//, ""));
+  ctx.media.byUrl(home.aboutImage.value.replace(/^wp\//, ""));
+  for (let i = 1; i <= COURSE_TILE_COUNT; i++) {
+    // "wp/2023/05/polish-1.webp" was uploaded as 2023/05/polish-1.jpg.
+    const base = home[`course${i}Image`].value.replace(/^wp\/|\.\w+$/g, "");
+    const original = ctx.wp.get(
+      "select meta_value from wp_postmeta where meta_key = '_wp_attached_file' and meta_value like ?",
+      `${base}.%`,
+    )?.meta_value;
+    if (original) ctx.media.byUrl(original);
+    else ctx.warn(`site: no upload for ${base}`);
+  }
 
-  const site = {
-    key: "site",
-    value: {
-      footer_address:
-        "Battery Factory | B13b, Bulebel Industrial Estate | Zejtun ZTN3000",
-      facebook_url: "https://www.facebook.com/batteryfactorymt",
-    },
-  };
-  ctx.upsert("settings", [site], "key");
+  ctx.upsert(
+    "settings",
+    [
+      {
+        key: "site",
+        value: {
+          footerText:
+            "Copyright © 2026 Malta Detailing Academy | All rights reserved.",
+          contactEmail: "info@mda.mt",
+          phone: "9945 7048",
+          Facebook: "https://www.facebook.com/maltadetailingacademy",
+          Instagram: "https://www.instagram.com/maltadetailingacademy",
+        },
+      },
+      // Courses are booked, not shipped: one free "method" so the order
+      // records how it was fulfilled, and no free-delivery threshold.
+      {
+        key: "shop",
+        value: {
+          vat_rate: 0.18,
+          prices_include_vat: true,
+          free_shipping_min_cents: 0,
+          shipping: [
+            {
+              id: "no-delivery",
+              label: "No delivery (course booking)",
+              countries: [],
+              price_cents: 0,
+            },
+          ],
+        },
+      },
+    ],
+    "key",
+  );
+
+  // Redirects: the Redirection plugin's rules, then old product slugs that
+  // WooCommerce redirected (`_wp_old_slug`), as on the live site.
+  const redirects = new Map<string, string>();
+  for (const r of ctx.wp.all(
+    "select url, action_data from wp_redirection_items where status = 'enabled' and action_type = 'url'",
+  )) {
+    const source = `/${r.url!.replace(/^\/+|\/+$/g, "")}/`;
+    const destination =
+      r.action_data!.replace(/^https?:\/\/(www\.)?mda\.mt/, "") || "/";
+    redirects.set(source, destination);
+  }
+  for (const r of ctx.wp.all(
+    "select m.meta_value as old_slug, p.post_name as slug from wp_postmeta m join wp_posts p on p.ID = m.post_id where m.meta_key = '_wp_old_slug' and p.post_type = 'product' and p.post_status = 'publish'",
+  )) {
+    if (r.old_slug && r.old_slug !== r.slug)
+      redirects.set(`/product/${r.old_slug}/`, `/product/${r.slug}/`);
+  }
+  ctx.upsert(
+    "redirects",
+    [...redirects].map(([source, destination]) => ({
+      source,
+      destination,
+      permanent: true,
+    })),
+    "source",
+  );
+  ctx.count("redirects", [...redirects.keys()].join(", "));
 }

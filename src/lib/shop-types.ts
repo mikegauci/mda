@@ -10,6 +10,7 @@ export type Category = {
 export type Addon = { id: string; label: string; price_cents: number };
 export type Product = Tables<"products"> & {
   image: MediaInfo | null;
+  details_background: MediaInfo | null;
   variants: Variant[];
   gallery: { image: MediaInfo | null; sort_order: number }[];
   categories: { category: Category | null }[];
@@ -72,4 +73,45 @@ export function gridAction(
   if (p.contact_button) return "contact";
   if (p.variants.length) return p.variants.some(hasPrice) ? "options" : "more";
   return hasPrice(p) && available(p) ? "cart" : "more";
+}
+
+export type CourseDetail = { icon_media_id: string | null; html: string };
+
+const DEFAULT_STOCK_MESSAGES = {
+  in_stock: "%s seats available",
+  low_stock: "Only 1 seat available",
+  backorder: "Available next course",
+  out_of_stock: "Course full. Check again soon!",
+};
+
+// The seats text WooCommerce shows under the chosen date, from the course's
+// own messages (the theme's stock fields). A date that manages its own stock
+// uses it; otherwise the course's stock applies, as in WooCommerce.
+export function seatsMessage(p: Product, v: Variant | null): string {
+  if (p.hide_stock_status) return "";
+  const messages = {
+    ...DEFAULT_STOCK_MESSAGES,
+    ...((p.stock_messages ?? {}) as Partial<typeof DEFAULT_STOCK_MESSAGES>),
+  };
+  const source = v?.manage_stock ? v : p.manage_stock ? p : null;
+  const status =
+    v && !v.manage_stock ? v.stock_status : (source ?? p).stock_status;
+  if (!source)
+    return status === "out_of_stock"
+      ? messages.out_of_stock
+      : status === "on_backorder"
+        ? messages.backorder
+        : "";
+  const seats = source.stock_quantity ?? 0;
+  if (seats <= 0)
+    return source.backorders ? messages.backorder : messages.out_of_stock;
+  if (seats === 1) return messages.low_stock;
+  return messages.in_stock.replace("%s", String(seats));
+}
+
+// Whether the course (or the chosen date) can be booked for `quantity` seats.
+export function bookable(p: Product, v: Variant | null, quantity = 1) {
+  const source = v?.manage_stock ? v : p.manage_stock ? p : null;
+  if (!source) return (v ?? p).stock_status !== "out_of_stock";
+  return source.backorders || (source.stock_quantity ?? 0) >= quantity;
 }

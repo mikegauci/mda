@@ -2,70 +2,51 @@ import Link from "next/link";
 import Image from "next/image";
 import { mediaUrl } from "@/lib/media";
 import { formatPrice } from "@/lib/format";
-import {
-  available,
-  gridAction,
-  priceLabel,
-  type Product,
-} from "@/lib/shop-types";
+import { gridAction, priceLabel, type Product } from "@/lib/shop-types";
 import { AddToCartButton } from "./add-to-cart-button";
 import { ProductPlaceholder } from "./product-placeholder";
 
-// A product in the WooCommerce grid: image (with the "Out of stock" badge),
-// name, price and the button WooCommerce picks for the product type.
-export function ProductCard({
-  product: p,
-  whatsappUrl,
-}: {
-  product: Product;
-  whatsappUrl: string;
-}) {
+// A course in the WooCommerce grid ("You may also like", "Related products"):
+// square image, the course's seats left in green, name, price and the
+// outline button WooCommerce picks for the product type.
+export function ProductCard({ product: p }: { product: Product }) {
   const href = `/product/${p.slug}/`;
   const action = gridAction(p);
   const priceText = priceLabel(p, formatPrice);
+  const seats =
+    p.manage_stock && !p.hide_stock_status && (p.stock_quantity ?? 0) > 0
+      ? p.stock_quantity
+      : null;
   return (
     <article>
-      <Link href={href} className="relative block">
+      <Link href={href} className="block">
         {p.image ? (
           <Image
             width={600}
             height={600}
             src={mediaUrl(p.image.path)}
             alt={p.image.alt || p.name}
-            sizes="(min-width: 922px) 285px, 50vw"
-            className="aspect-[165/210] w-full object-cover lg:aspect-[285/250]"
+            sizes="(min-width: 922px) 231px, 50vw"
+            className="aspect-square w-full object-cover"
           />
         ) : (
-          <ProductPlaceholder className="aspect-[165/210] w-full lg:aspect-[285/250]" />
-        )}
-        {!available(p) && (
-          <span className="text-brand absolute inset-x-4 bottom-4 bg-white/90 py-3 text-center text-sm font-black uppercase">
-            Out of stock
-          </span>
+          <ProductPlaceholder className="aspect-square w-full" />
         )}
       </Link>
+      {seats !== null && (
+        <p className="mt-3 text-[#77a464]">{seats} places available</p>
+      )}
       <Link href={href}>
-        <h2 className="text-ink mt-3 text-xl leading-[1.4] font-black">
+        <h2 className="mt-1 mb-2 text-base leading-[1.3] font-bold lowercase">
           {p.name}
         </h2>
       </Link>
-      {priceText && (
-        <p className="text-ink mt-2 text-lg font-black">{priceText}</p>
-      )}
-      <div className="mt-5">
-        {action === "contact" ? (
-          <a
-            href={whatsappUrl}
-            target="_blank"
-            rel="noopener"
-            className="shop-button"
-          >
-            Contact us now
-          </a>
-        ) : action === "cart" ? (
+      {priceText && <p className="mb-2 text-[14.4px] font-bold">{priceText}</p>}
+      <div className="my-2">
+        {action === "cart" ? (
           <AddToCartButton product={p} />
         ) : (
-          <Link href={href} className="shop-button">
+          <Link href={href} className="pill-button">
             {action === "options" ? "Select options" : "Read more"}
           </Link>
         )}
