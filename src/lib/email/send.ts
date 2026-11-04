@@ -1,7 +1,7 @@
 import "server-only";
 import { renderLayout, type EmailContent } from "./layout";
 
-const FROM_EMAIL = process.env.EMAIL_FROM ?? "info@mda.mt";
+const FROM_EMAIL = process.env.EMAIL_FROM ?? "website@mda.mt";
 const FROM_NAME = "Malta Detailing Academy";
 
 export type EmailAttachment = {
