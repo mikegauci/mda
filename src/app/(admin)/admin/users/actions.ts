@@ -20,7 +20,7 @@ export async function saveUser(
   id: string | null,
   input: UserInput,
 ): Promise<UserResult> {
-  const actor = await assertAdmin();
+  await assertAdmin();
   if (id && !UUID.test(id)) return { error: "Invalid user." };
   const clean = validateUser(input, !id);
   if ("error" in clean) return clean;
@@ -87,19 +87,12 @@ export async function saveUser(
     else {
       const emailChanged = existing.user.email?.toLowerCase() !== value.email;
       if (emailChanged || value.password) {
-        if (id === actor.id)
-          warning =
-            "Profile saved. Ask another full administrator to change your login details.";
-        else {
-          const { error } = await auth.auth.admin.updateUserById(id, {
-            ...(emailChanged
-              ? { email: value.email, email_confirm: true }
-              : {}),
-            ...(value.password ? { password: value.password } : {}),
-          });
-          if (error)
-            warning = `Profile and permissions saved, but login details were not updated: ${error.message}`;
-        }
+        const { error } = await auth.auth.admin.updateUserById(id, {
+          ...(emailChanged ? { email: value.email, email_confirm: true } : {}),
+          ...(value.password ? { password: value.password } : {}),
+        });
+        if (error)
+          warning = `Profile and permissions saved, but login details were not updated: ${error.message}`;
       }
     }
   }
@@ -115,7 +108,7 @@ export async function deleteUser(
   id: string,
   confirmedEmail: string,
 ): Promise<{ error: string } | { deleted: true }> {
-  const actor = await assertAdmin();
+  await assertAdmin();
   if (!UUID.test(id)) return { error: "Invalid user." };
   if (id === actor.id) return { error: "You cannot delete your own account." };
   const db = await createClient();
