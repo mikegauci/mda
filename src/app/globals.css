@@ -16,6 +16,8 @@
   --color-panel: #f9fafb; /* contact section */
   --color-heading: #000000;
   --color-coral: #cc3a2b; /* errors */
+  --color-footer: #dddddd; /* admin menu links on black */
+  --color-footer-muted: #adadad; /* admin menu section labels */
 }
 
 @layer base {
