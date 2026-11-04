@@ -130,7 +130,6 @@ export function UserEditor({
             <input
               type="email"
               required
-              readOnly={self}
               maxLength={254}
               autoComplete="off"
               value={value.email}
@@ -138,7 +137,7 @@ export function UserEditor({
               className={`${field} read-only:bg-black/5`}
             />
           </label>
-          {!self && (
+          {
             <label className="text-sm font-semibold">
               {user ? "New password" : "Initial password *"}
               <input
@@ -156,10 +155,10 @@ export function UserEditor({
                 least 12 characters. No email is sent automatically.
               </span>
             </label>
-          )}
+          }
         </fieldset>
         <fieldset
-          disabled={pending || self}
+          disabled={pending}
           className="min-w-0 space-y-4 border-t border-black/10 pt-5 disabled:opacity-65"
         >
           <legend className="pt-5 text-lg font-bold">Role & permissions</legend>
@@ -242,8 +241,9 @@ export function UserEditor({
         </fieldset>
         {self && (
           <p className="bg-brand/15 rounded-lg p-3 text-sm">
-            This is your account. Your login details, role and permissions are
-            protected here; another full administrator can change them.
+            This is your account. If you remove your own full administrator
+            access you will lose access to this page. The site always keeps at
+            least one full administrator.
           </p>
         )}
         <div className="flex flex-wrap items-center gap-3 border-t border-black/10 pt-5">
