@@ -13,3 +13,11 @@ export async function getSiteSettings() {
   if (error) throw error;
   return (data?.value ?? {}) as Record<string, string>;
 }
+
+// The year for "{year}" in the footer copyright. Cached for a day, so the
+// footer rolls over by itself on 1 January.
+export async function currentYear() {
+  "use cache";
+  cacheLife("days");
+  return String(new Date().getFullYear());
+}

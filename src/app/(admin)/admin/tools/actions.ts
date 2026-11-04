@@ -127,7 +127,6 @@ async function saveSiteSettingsWork(form: FormData) {
   await assertAdmin();
   const fields = [
     "navigation",
-    "footerText",
     "contactEmail",
     "phone",
     "Facebook",
