@@ -108,7 +108,7 @@ export async function deleteUser(
   id: string,
   confirmedEmail: string,
 ): Promise<{ error: string } | { deleted: true }> {
-  await assertAdmin();
+  const actor = await assertAdmin();
   if (!UUID.test(id)) return { error: "Invalid user." };
   if (id === actor.id) return { error: "You cannot delete your own account." };
   const db = await createClient();
