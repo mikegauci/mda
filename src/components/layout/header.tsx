@@ -55,7 +55,7 @@ function HeaderView({
             width={150}
             height={105}
             priority
-            className="desk:w-[134px] h-auto w-[150px]"
+            className="desk:w-[134px] h-auto w-[100px]"
           />
         </Link>
 
