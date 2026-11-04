@@ -94,7 +94,7 @@ export function MediaPicker({
           placeholder="Search by file name"
           className="w-56 rounded border border-[#ddd] px-3 py-1.5 text-sm"
         />
-        <label className="bg-brand hover:text-brand cursor-pointer rounded-[5px] px-3 py-1.5 text-sm font-bold text-black hover:bg-black">
+        <label className="bg-ink hover:bg-brand-dark cursor-pointer rounded-[5px] px-3 py-1.5 text-sm font-bold text-white">
           Upload
           <input
             type="file"

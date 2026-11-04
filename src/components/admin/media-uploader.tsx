@@ -29,7 +29,7 @@ export function MediaUploader() {
     <div className="flex items-center gap-3">
       {status && <span className="text-muted text-sm">{status}</span>}
       <label
-        className={`bg-brand hover:text-brand cursor-pointer rounded-[5px] px-4 py-2 text-sm font-bold text-black hover:bg-black ${
+        className={`bg-ink hover:bg-brand-dark cursor-pointer rounded-[5px] px-4 py-2 text-sm font-bold text-white ${
           busy ? "pointer-events-none opacity-60" : ""
         }`}
       >

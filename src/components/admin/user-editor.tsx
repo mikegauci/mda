@@ -250,7 +250,7 @@ export function UserEditor({
           <button
             type="submit"
             disabled={pending}
-            className="bg-brand hover:bg-ink hover:text-brand rounded-lg px-6 py-3 font-bold text-black disabled:opacity-50"
+            className="bg-ink hover:bg-brand-dark rounded-lg px-6 py-3 font-bold text-white disabled:opacity-50"
           >
             {pending ? "Saving…" : user ? "Save user" : "Create user"}
           </button>

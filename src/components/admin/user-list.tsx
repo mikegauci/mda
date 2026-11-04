@@ -39,7 +39,7 @@ export function AdminUserList({
         actions={
           <Link
             href="/admin/users/new/"
-            className="bg-brand hover:bg-ink hover:text-brand rounded-lg px-5 py-2.5 font-bold text-black"
+            className="bg-ink hover:bg-brand-dark rounded-lg px-5 py-2.5 font-bold text-white"
           >
             Add user
           </Link>
@@ -210,7 +210,7 @@ export function AdminUserList({
                 key={n}
                 aria-current={n === page ? "page" : undefined}
                 href={usersHref(q, role, n)}
-                className={`rounded-lg border px-3 py-2 ${n === page ? "border-brand bg-brand font-bold" : "border-black/15 bg-white"}`}
+                className={`rounded-lg border px-3 py-2 ${n === page ? "border-ink bg-ink font-bold text-white" : "border-black/15 bg-white"}`}
               >
                 {n}
               </Link>
