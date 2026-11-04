@@ -1,21 +1,23 @@
 import Link from "next/link";
 import { Container } from "@/components/layout/container";
 import { FACEBOOK_URL, INSTAGRAM_URL } from "@/lib/navigation";
-import { getSiteSettings } from "@/lib/site-settings";
+import { currentYear, getSiteSettings } from "@/lib/site-settings";
 
 // Astra "below footer" row on black: copyright, then email | terms | phone,
 // then the Facebook and Instagram icons. It is the menu's #contact target.
 export async function Footer() {
-  const settings = await getSiteSettings();
-  const copyright =
-    settings.footerText ||
-    "Copyright © 2026 Malta Detailing Academy | All rights reserved.";
+  const [settings, year] = await Promise.all([
+    getSiteSettings(),
+    currentYear(),
+  ]);
   const email = settings.contactEmail || "info@mda.mt";
   const phone = settings.phone || "9945 7048";
   return (
     <footer id="contact" className="bg-black py-5 text-xs text-white">
       <Container className="grid min-h-[120px] items-center gap-2.5 text-center md:grid-cols-[1fr_auto_auto] md:gap-0 md:px-[30px]">
-        <p className="md:pr-10 md:text-left">{copyright}</p>
+        <p className="md:pr-10 md:text-left">
+          Copyright © {year} Malta Detailing Academy | All rights reserved.
+        </p>
         <p className="md:text-right">
           <a href={`mailto:${email}`}>{email}</a> |{" "}
           <Link href="/terms-and-conditions/" target="_blank">

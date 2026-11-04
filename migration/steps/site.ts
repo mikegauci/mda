@@ -59,8 +59,6 @@ export function importSite(ctx: Context) {
       {
         key: "site",
         value: {
-          footerText:
-            "Copyright © 2026 Malta Detailing Academy | All rights reserved.",
           contactEmail: "info@mda.mt",
           phone: "9945 7048",
           Facebook: "https://www.facebook.com/maltadetailingacademy",

@@ -13,6 +13,8 @@ import {
 } from "@/lib/admin/inventory";
 import { bulkUpdate, restoreRevision, saveSiteSettings } from "./actions";
 import { formatPrice } from "@/lib/format";
+import { NavigationEditor } from "@/components/admin/navigation-editor";
+import { siteNavigation } from "@/lib/navigation";
 const input = "rounded border border-black/20 bg-white p-2 text-sm";
 const sections = ["history", "bulk", "seo", "media", "reports", "settings"];
 export const metadata = { title: "CMS tools" };
@@ -98,30 +100,59 @@ export default async function Tools({
       .maybeSingle();
     if (error) throw error;
     const settings = (data?.value ?? {}) as Record<string, string>;
+    const [{ data: courses }, { data: pages }] = await Promise.all([
+      db
+        .from("products")
+        .select("name,slug")
+        .eq("status", "published")
+        .order("name"),
+      db
+        .from("pages")
+        .select("title,path")
+        .eq("status", "published")
+        .order("title"),
+    ]);
+    const links = [
+      { label: "Homepage", href: "/" },
+      { label: "Homepage: about", href: "/#about" },
+      { label: "Homepage: courses", href: "/#courses" },
+      { label: "Footer: contact", href: "/#contact" },
+      ...(pages ?? [])
+        .filter((p) => p.path && !["shop", "cart", "checkout"].includes(p.path))
+        .map((p) => ({ label: p.title, href: `/${p.path}/` })),
+      ...(courses ?? []).map((c) => ({
+        label: c.name,
+        href: `/product/${c.slug}/`,
+      })),
+    ];
     body = (
-      <ActionForm action={saveSiteSettings} className="max-w-2xl space-y-4">
-        {[
-          "navigation",
-          "footerText",
-          "contactEmail",
-          "phone",
-          "Facebook",
-          "Instagram",
-        ].map((key) => (
+      <ActionForm action={saveSiteSettings} className="max-w-3xl space-y-6">
+        <fieldset className="space-y-2">
+          <legend className="mb-2 font-bold">Menu</legend>
+          <NavigationEditor
+            initial={siteNavigation(settings.navigation)}
+            links={links}
+          />
+        </fieldset>
+        {(
+          [
+            ["contactEmail", "Contact email", ""],
+            ["phone", "Phone", ""],
+            ["Facebook", "Facebook link", ""],
+            ["Instagram", "Instagram link", ""],
+          ] as const
+        ).map(([key, label, hint]) => (
           <label key={key} className="block text-sm">
-            {key}
-            <textarea
-              rows={key === "navigation" ? 8 : 2}
-              aria-label={key}
-              placeholder={
-                key === "navigation"
-                  ? "About | /#about\nCourses | /#courses\n- Basic Polishing | /product/basic-polishing/"
-                  : undefined
-              }
+            {label}
+            <input
+              aria-label={label}
               className={`${input} mt-1 block w-full`}
               name={key}
               defaultValue={settings[key] ?? ""}
             />
+            {hint && (
+              <span className="text-muted mt-1 block text-xs">{hint}</span>
+            )}
           </label>
         ))}
         <button className="shop-button">Save site settings</button>
