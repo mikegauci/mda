@@ -4,8 +4,29 @@
 type Field = {
   label: string;
   value: string;
-  kind?: "image" | "order" | "select";
+  kind?: "image" | "order" | "select" | "tiles";
 };
+
+// A homepage course tile: the title (line breaks kept), a site link and a
+// media path. Stored as JSON in the "courses" field.
+export type CourseTile = { title: string; url: string; image: string };
+
+export function parseTiles(value: string): CourseTile[] {
+  try {
+    const list = JSON.parse(value);
+    return Array.isArray(list)
+      ? list.filter(
+          (t): t is CourseTile =>
+            t &&
+            typeof t.title === "string" &&
+            typeof t.url === "string" &&
+            typeof t.image === "string",
+        )
+      : [];
+  } catch {
+    return [];
+  }
+}
 
 // The homepage's course tiles, in the live grid order (three per row).
 const COURSE_TILES = [
@@ -47,7 +68,6 @@ const COURSE_TILES = [
     "wp/2023/05/moto-1.webp",
   ],
 ];
-export const COURSE_TILE_COUNT = COURSE_TILES.length;
 
 export const PAGE_FIELDS: Record<string, Record<string, Field>> = {
   "": {
@@ -72,25 +92,12 @@ export const PAGE_FIELDS: Record<string, Record<string, Field>> = {
         "Founded In 2023, Malta Detailing Academy’s aim is to provide you with all the detailing courses automotive enthusiast would need to know. Each course is guaranteed to teach you all there is before touching your car and get up to speed to detail your own car with one-to-one practice with professional instructors.",
     },
     coursesHeading: { label: "Courses heading", value: "courses" },
-    ...Object.fromEntries(
-      COURSE_TILES.flatMap(([title, url, image], i) => [
-        [
-          `course${i + 1}Title`,
-          { label: `Course tile ${i + 1}: title`, value: title },
-        ],
-        [
-          `course${i + 1}Url`,
-          { label: `Course tile ${i + 1}: link`, value: url },
-        ],
-        [
-          `course${i + 1}Image`,
-          {
-            label: `Course tile ${i + 1}: image`,
-            value: image,
-            kind: "image" as const,
-          },
-        ],
-      ]),
-    ),
+    courses: {
+      label: "Course tiles (three per row)",
+      value: JSON.stringify(
+        COURSE_TILES.map(([title, url, image]) => ({ title, url, image })),
+      ),
+      kind: "tiles",
+    },
   },
 };

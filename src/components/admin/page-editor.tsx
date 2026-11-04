@@ -4,6 +4,7 @@ import { LocalDraft } from "@/components/admin/local-draft";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { savePage, type PageInput } from "@/app/(admin)/admin/pages/actions";
+import { CourseTilesField } from "@/components/admin/course-tiles-field";
 import { MediaField, type PickedMedia } from "@/components/admin/media-picker";
 import { RichTextEditor } from "@/components/admin/rich-text-editor";
 import { PAGE_FIELDS } from "@/lib/page-fields";
@@ -124,6 +125,15 @@ export function PageEditor({
                     <option value="video">Video</option>
                     <option value="image">Image</option>
                   </select>
+                ) : config.kind === "tiles" ? (
+                  <CourseTilesField
+                    value={page.contentFields?.[key] ?? config.value}
+                    onChange={(value) =>
+                      update({
+                        contentFields: { ...page.contentFields, [key]: value },
+                      })
+                    }
+                  />
                 ) : config.kind === "image" ? (
                   <MediaField
                     label={config.label}
