@@ -4,7 +4,7 @@
 // in the CMS. The unused Maintenance Page is dropped.
 import type { Context } from "../lib/context.ts";
 import { decodeEntities, wpDate } from "../lib/wp.ts";
-import { COURSE_TILE_COUNT, PAGE_FIELDS } from "../../src/lib/page-fields.ts";
+import { PAGE_FIELDS, parseTiles } from "../../src/lib/page-fields.ts";
 import { seoFrom } from "./seo.ts";
 
 const CODE_PAGES = new Set(["shop", "cart", "checkout", "my-account"]);
@@ -42,9 +42,9 @@ export function importSite(ctx: Context) {
   const home = PAGE_FIELDS[""];
   ctx.media.byUrl(home.heroVideo.value.replace(/^wp\//, ""));
   ctx.media.byUrl(home.aboutImage.value.replace(/^wp\//, ""));
-  for (let i = 1; i <= COURSE_TILE_COUNT; i++) {
+  for (const tile of parseTiles(home.courses.value)) {
     // "wp/2023/05/polish-1.webp" was uploaded as 2023/05/polish-1.jpg.
-    const base = home[`course${i}Image`].value.replace(/^wp\/|\.\w+$/g, "");
+    const base = tile.image.replace(/^wp\/|\.\w+$/g, "");
     const original = ctx.wp.get(
       "select meta_value from wp_postmeta where meta_key = '_wp_attached_file' and meta_value like ?",
       `${base}.%`,

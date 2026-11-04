@@ -1,9 +1,8 @@
 "use server";
-import { env } from "@/lib/env";
 import { revalidatePath, updateTag } from "next/cache";
 import { assertAdmin } from "@/lib/auth/admin";
 import { RESERVED_SLUGS, slugify } from "@/lib/slug";
-import { PAGE_FIELDS } from "@/lib/page-fields";
+import { PAGE_FIELDS, parseTiles } from "@/lib/page-fields";
 import { pageContentMode } from "@/lib/page-content";
 import { createClient } from "@/lib/supabase/server";
 import type { Json } from "@/lib/supabase/database.types";
@@ -71,38 +70,53 @@ export async function savePage(
     const fields: Record<string, string> = {};
     for (const key of Object.keys(PAGE_FIELDS[path])) {
       const value = input.contentFields[key] ?? PAGE_FIELDS[path][key].value;
-      if (typeof value !== "string" || value.length > 5000)
+      const tiles = PAGE_FIELDS[path][key].kind === "tiles";
+      if (typeof value !== "string" || value.length > (tiles ? 20000 : 5000))
         return { error: "Page text must be under 5,000 characters per field." };
-      if (key === "videoId" && !/^[a-zA-Z0-9_-]{11}$/.test(value))
-        return { error: "Enter the 11-character YouTube video ID." };
-      if (key.endsWith("Url") && !/^\/(?!\/)[^\s]*$/.test(value))
-        return { error: "Story URL must be a path on this site." };
+      // Links are site paths or anchors on the page (#courses).
+      if (key.endsWith("Url") && !/^(\/(?!\/)|#)[^\s]*$/.test(value))
+        return { error: "Links must be a path on this site or a #section." };
       if (
-        ["storyImage", "heroImage"].includes(key) &&
+        PAGE_FIELDS[path][key].kind === "image" &&
         (!value || /[\x00-\x1f:?#]/.test(value) || value.startsWith("/"))
       )
         return { error: "Select an image from the media library." };
       if (
-        key === "homeOrder" &&
-        value.split(",").sort().join(",") !== "directory,events,intro,shop"
-      )
-        return { error: "Every homepage section must appear exactly once." };
-      if (key === "heroMode" && !["video", "image"].includes(value))
-        return { error: "Choose a video or image hero." };
-      if (
         key === "heroVideo" &&
-        !(
-          /^\/(?!\/)[^\s]*\.mp4$/.test(value) ||
-          (value.startsWith(
-            env.supabaseUrl + "/storage/v1/object/public/media/",
-          ) &&
-            /\.mp4$/.test(value))
-        )
+        value &&
+        !/^[^\s:?#/][^\s:?#]*\.mp4$/.test(value)
       )
         return {
-          error:
-            "Use a local MP4 path or a public MP4 URL from the media library.",
+          error: "Use the media path of an MP4, e.g. wp/2023/05/hero.mp4.",
         };
+      if (tiles) {
+        const list = parseTiles(value);
+        // parseTiles drops malformed entries; any dropped means bad input.
+        let raw: unknown = null;
+        try {
+          raw = JSON.parse(value);
+        } catch {}
+        if (
+          !Array.isArray(raw) ||
+          raw.length !== list.length ||
+          list.length > 60
+        )
+          return { error: "Check the course tiles." };
+        for (const [i, t] of list.entries()) {
+          if (!t.title.trim() || t.title.length > 200)
+            return { error: `Course ${i + 1} needs a title.` };
+          if (!/^\/(?!\/)[^\s]*$/.test(t.url))
+            return {
+              error: `Course ${i + 1}: the link must be a path on this site.`,
+            };
+          if (
+            !t.image ||
+            /[\x00-\x1f:?#]/.test(t.image) ||
+            t.image.startsWith("/")
+          )
+            return { error: `Course ${i + 1}: select an image.` };
+        }
+      }
       fields[key] = value;
     }
     seo.content_fields = fields;

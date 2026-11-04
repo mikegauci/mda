@@ -4,7 +4,7 @@ import { Container } from "@/components/layout/container";
 import { ManagedPageContent } from "@/components/managed-page-content";
 import { RichLine } from "@/components/rich-line";
 import { mediaUrl } from "@/lib/media";
-import { COURSE_TILE_COUNT } from "@/lib/page-fields";
+import { parseTiles } from "@/lib/page-fields";
 import { codePageMetadata } from "@/lib/seo";
 import { getPageFields } from "@/lib/static-pages";
 
@@ -19,11 +19,9 @@ export function generateMetadata() {
 // image tiles (the menu's anchors).
 export default async function Home() {
   const f = await getPageFields("");
-  const tiles = Array.from({ length: COURSE_TILE_COUNT }, (_, i) => ({
-    title: f[`course${i + 1}Title`],
-    url: f[`course${i + 1}Url`],
-    image: f[`course${i + 1}Image`],
-  })).filter((tile) => tile.title && tile.image);
+  const tiles = parseTiles(f.courses).filter(
+    (tile) => tile.title && tile.image,
+  );
   const rows = Array.from({ length: Math.ceil(tiles.length / 3) }, (_, i) =>
     tiles.slice(i * 3, i * 3 + 3),
   );
@@ -92,9 +90,9 @@ export default async function Home() {
             key={i}
             className={`grid gap-6 md:grid-cols-3 ${i > 0 ? "py-6" : ""}`}
           >
-            {row.map((tile) => (
+            {row.map((tile, j) => (
               <Link
-                key={`${tile.url}-${tile.image}`}
+                key={`${tile.url}-${j}`}
                 href={tile.url}
                 className="group relative block aspect-square overflow-hidden"
               >
