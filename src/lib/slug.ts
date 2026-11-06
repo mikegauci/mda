@@ -17,6 +17,7 @@ export const RESERVED_SLUGS = new Set([
   "cart",
   "checkout",
   "my-account",
+  "internal-links",
   "product",
   "product-category",
   "shop",

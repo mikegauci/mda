@@ -1,4 +1,5 @@
 "use server";
+import { isLinkAddress } from "@/lib/internal-links";
 import type { TablesUpdate } from "@/lib/supabase/database.types";
 import { assertAdmin } from "@/lib/auth/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -137,7 +138,7 @@ async function saveSiteSettingsWork(form: FormData) {
       k,
       String(form.get(k) || "")
         .trim()
-        .slice(0, 2000),
+        .slice(0, k === "navigation" ? 20000 : 2000),
     ]),
   );
   for (const k of ["Facebook", "Instagram"]) {
@@ -158,12 +159,10 @@ async function saveSiteSettingsWork(form: FormData) {
         .replace(/^\s*-\s*/, "")
         .split("|")
         .map((s) => s.trim());
-      return rest.length || !label || !/^\/(?!\/)[^\s]*$/.test(href);
+      return rest.length || !label || !isLinkAddress(href);
     })
   )
-    throw Error(
-      "Use one Label | /path/ navigation entry per line; start dropdown items with -.",
-    );
+    throw Error("Choose a valid link for every menu item.");
   const { error } = await db.from("settings").upsert({ key: "site", value });
   if (error) throw error;
   updateTag("site-settings");

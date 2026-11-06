@@ -2,6 +2,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { MediaField, type PickedMedia } from "@/components/admin/media-picker";
+import { HtmlLinkInput } from "@/components/admin/link-picker";
 import { RichTextEditor } from "@/components/admin/rich-text-editor";
 import {
   saveProduct,
@@ -407,12 +408,12 @@ export function ProductEditor({
                     patch({ icon_media_id: m?.id ?? null });
                   }}
                 />
-                <label className="text-sm">
+                <div className="text-sm">
                   Text
-                  <input
-                    className={field}
+                  <HtmlLinkInput
+                    label={`Course detail ${i + 1} text`}
                     value={d.html}
-                    onChange={(e) => patch({ html: e.target.value })}
+                    onChange={(html) => patch({ html })}
                   />
                   <button
                     type="button"
@@ -423,7 +424,7 @@ export function ProductEditor({
                   >
                     Remove line
                   </button>
-                </label>
+                </div>
               </div>
             );
           })}

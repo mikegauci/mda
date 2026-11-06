@@ -1,11 +1,13 @@
+import { getInternalLinks } from "@/lib/internal-links-server";
+import { resolveLinkValue } from "@/lib/internal-links";
 import { PAGE_FIELDS } from "@/lib/page-fields";
 import "server-only";
 import { cacheLife, cacheTag } from "next/cache";
 import { publicDb } from "@/lib/supabase/public";
 
-export async function getStaticPage(path: string) {
+export async function getStaticPage(path: string, raw = false) {
   "use cache";
-  cacheTag("pages", `page:${path}`);
+  cacheTag("pages", "products", `page:${path}`);
   cacheLife("hours");
   const { data, error } = await publicDb
     .from("pages")
@@ -14,7 +16,7 @@ export async function getStaticPage(path: string) {
     .eq("status", "published")
     .maybeSingle();
   if (error) throw error;
-  return data;
+  return raw ? data : resolveLinkValue(data, await getInternalLinks());
 }
 
 export async function getStandalonePages() {
@@ -42,8 +44,8 @@ export async function getPageImage(id: string) {
   return data;
 }
 
-export async function getPageFields(path: string) {
-  const page = await getStaticPage(path);
+export async function getPageFields(path: string, raw = false) {
+  const page = await getStaticPage(path, raw);
   const seo = page?.seo;
   const stored =
     seo && typeof seo === "object" && !Array.isArray(seo)

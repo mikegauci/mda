@@ -1,5 +1,7 @@
 "use client";
 
+import { LinkPicker } from "@/components/admin/link-picker";
+import { linkHtml } from "@/lib/internal-links";
 import Image from "@tiptap/extension-image";
 import { EditorContent, useEditor, useEditorState } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
@@ -76,6 +78,7 @@ function VisualEditor({
   onChange: (html: string) => void;
 }) {
   const [picking, setPicking] = useState(false);
+  const [linkOpen, setLinkOpen] = useState(false);
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -115,14 +118,6 @@ function VisualEditor({
 
   if (!editor) return <div className="min-h-[460px]" />;
   const chain = () => editor.chain().focus();
-
-  function setLink() {
-    const previous = editor!.getAttributes("link").href as string | undefined;
-    const url = window.prompt("Link address", previous ?? "https://");
-    if (url === null) return;
-    if (!url.trim()) chain().extendMarkRange("link").unsetLink().run();
-    else chain().extendMarkRange("link").setLink({ href: url.trim() }).run();
-  }
 
   const buttons: {
     label: string;
@@ -166,7 +161,12 @@ function VisualEditor({
       active: state?.underline,
       run: () => chain().toggleUnderline().run(),
     },
-    { label: "Link", title: "Link", active: state?.link, run: setLink },
+    {
+      label: "Link",
+      title: "Link",
+      active: state?.link,
+      run: () => setLinkOpen(true),
+    },
     {
       label: "• List",
       title: "Bulleted list",
@@ -213,6 +213,20 @@ function VisualEditor({
         ))}
       </div>
       <EditorContent editor={editor} />
+      {linkOpen && (
+        <LinkPicker
+          value={editor.getAttributes("link").href ?? ""}
+          showText={editor.state.selection.empty && !editor.isActive("link")}
+          onClose={() => setLinkOpen(false)}
+          onSelect={(href, text) => {
+            setLinkOpen(false);
+            if (!href) chain().extendMarkRange("link").unsetLink().run();
+            else if (editor.state.selection.empty && !editor.isActive("link"))
+              chain().insertContent(linkHtml(href, text)).run();
+            else chain().extendMarkRange("link").setLink({ href }).run();
+          }}
+        />
+      )}
       <MediaPicker
         open={picking}
         onClose={() => setPicking(false)}
@@ -235,7 +249,9 @@ function HtmlEditor({
   onChange: (html: string) => void;
 }) {
   const area = useRef<HTMLTextAreaElement>(null);
+  const [linkSelection, setLinkSelection] = useState({ start: 0, end: 0 });
   const [picking, setPicking] = useState(false);
+  const [linkOpen, setLinkOpen] = useState(false);
   const [preview, setPreview] = useState(true);
 
   function insert(html: string) {
@@ -254,6 +270,19 @@ function HtmlEditor({
           className="rounded bg-white px-2.5 py-1 font-semibold hover:bg-[#e8e8e8]"
         >
           Insert image
+        </button>
+        <button
+          type="button"
+          className="rounded bg-white px-2.5 py-1 font-semibold hover:bg-[#e8e8e8]"
+          onClick={() => {
+            setLinkSelection({
+              start: area.current?.selectionStart ?? value.length,
+              end: area.current?.selectionEnd ?? value.length,
+            });
+            setLinkOpen(true);
+          }}
+        >
+          Insert link
         </button>
         <label className="ml-auto flex items-center gap-1.5">
           <input
@@ -279,6 +308,20 @@ function HtmlEditor({
           />
         )}
       </div>
+      {linkOpen && (
+        <LinkPicker
+          showText
+          initialText={value.slice(linkSelection.start, linkSelection.end)}
+          onClose={() => setLinkOpen(false)}
+          onSelect={(href, text) => {
+            const { start, end } = linkSelection;
+            onChange(
+              `${value.slice(0, start)}${linkHtml(href, text)}${value.slice(end)}`,
+            );
+            setLinkOpen(false);
+          }}
+        />
+      )}
       <MediaPicker
         open={picking}
         onClose={() => setPicking(false)}

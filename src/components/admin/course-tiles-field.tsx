@@ -1,4 +1,5 @@
 "use client";
+import { LinkField } from "@/components/admin/link-picker";
 import { MediaField } from "@/components/admin/media-picker";
 import { parseTiles, type CourseTile } from "@/lib/page-fields";
 
@@ -56,15 +57,14 @@ export function CourseTilesField({
                 onChange={(e) => patch(i, { title: e.target.value })}
               />
             </label>
-            <label className="block text-sm">
+            <div className="text-sm">
               Link
-              <input
-                className={field}
+              <LinkField
+                label={`Course ${i + 1} link`}
                 value={tile.url}
-                placeholder="/product/basic-polishing/"
-                onChange={(e) => patch(i, { url: e.target.value })}
+                onChange={(url) => patch(i, { url })}
               />
-            </label>
+            </div>
             <div className="flex gap-2">
               <button
                 type="button"
@@ -98,9 +98,7 @@ export function CourseTilesField({
       <button
         type="button"
         className="rounded border border-black/20 px-3 py-2 text-sm font-semibold"
-        onClick={() =>
-          set([...tiles, { title: "", url: "/product/", image: "" }])
-        }
+        onClick={() => set([...tiles, { title: "", url: "", image: "" }])}
       >
         Add course
       </button>

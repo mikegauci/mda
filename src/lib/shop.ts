@@ -1,4 +1,6 @@
 import "server-only";
+import { getInternalLinks } from "@/lib/internal-links-server";
+import { resolveLinkValue } from "@/lib/internal-links";
 import { cacheLife, cacheTag } from "next/cache";
 import { publicDb } from "@/lib/supabase/public";
 import type { Category, Product } from "./shop-types";
@@ -8,7 +10,7 @@ export const PRODUCT_SELECT =
 // Published products in WooCommerce's default order (menu order, then name).
 export async function getProducts(): Promise<Product[]> {
   "use cache";
-  cacheTag("products");
+  cacheTag("products", "pages");
   cacheLife("hours");
   const { data, error } = await publicDb
     .from("products")
@@ -16,7 +18,10 @@ export async function getProducts(): Promise<Product[]> {
     .eq("status", "published")
     .order("name");
   if (error) throw error;
-  return data as unknown as Product[];
+  return resolveLinkValue(
+    data as unknown as Product[],
+    await getInternalLinks(),
+  );
 }
 export async function getProduct(slug: string) {
   "use cache";
@@ -42,7 +47,7 @@ export async function getMediaPaths(ids: string[]) {
 // Categories with at least one published product, as in the shop sidebar.
 export async function getCategories(): Promise<Category[]> {
   "use cache";
-  cacheTag("products");
+  cacheTag("products", "pages");
   cacheLife("hours");
   const used = new Map<string, Category>();
   for (const p of await getProducts())

@@ -3,6 +3,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { connection } from "next/server";
 import { Suspense } from "react";
+import { InternalLinksProvider } from "@/components/admin/link-picker";
+import { getInternalLinks } from "@/lib/internal-links-server";
 import { AdminSidebar } from "@/components/admin/sidebar";
 import { signOut } from "@/lib/auth/actions";
 import { getCurrentUser, requireRole } from "@/lib/auth/session";
@@ -73,7 +75,11 @@ async function AdminOnly({ children }: { children: React.ReactNode }) {
   // The auth client reads the clock, so mark this as request-time first.
   await connection();
   await requireRole(["admin"], "/admin/");
-  return children;
+  return (
+    <InternalLinksProvider value={await getInternalLinks()}>
+      {children}
+    </InternalLinksProvider>
+  );
 }
 
 async function AdminNavigation() {

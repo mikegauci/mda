@@ -1,5 +1,6 @@
 "use client";
-import { useId, useState } from "react";
+import { LinkField } from "@/components/admin/link-picker";
+import { useState } from "react";
 import type { NavItem } from "@/lib/navigation";
 
 const field = "w-full rounded border border-black/20 bg-white p-2 text-sm";
@@ -30,15 +31,8 @@ function move<T>(list: T[], i: number, by: number) {
 // The site menu as rows: label, link (with suggestions of pages and
 // courses), reorder, remove, and dropdown items under each top-level item.
 // The form posts the lines in a hidden "navigation" field.
-export function NavigationEditor({
-  initial,
-  links,
-}: {
-  initial: NavItem[];
-  links: { label: string; href: string }[];
-}) {
+export function NavigationEditor({ initial }: { initial: NavItem[] }) {
   const [items, setItems] = useState<NavItem[]>(initial);
-  const listId = useId();
   const update = (i: number, patch: Partial<NavItem>) =>
     setItems(items.map((item, j) => (j === i ? { ...item, ...patch } : item)));
   const updateChild = (i: number, c: number, patch: Partial<NavItem>) =>
@@ -61,13 +55,10 @@ export function NavigationEditor({
         value={value.label}
         onChange={(e) => onChange({ label: e.target.value })}
       />
-      <input
-        className={field}
-        aria-label={`${label} link`}
-        placeholder="/#courses or /product/…/"
-        list={listId}
+      <LinkField
+        label={`${label} link`}
         value={value.href}
-        onChange={(e) => onChange({ href: e.target.value })}
+        onChange={(href) => onChange({ href })}
       />
     </div>
   );
@@ -75,13 +66,6 @@ export function NavigationEditor({
   return (
     <div className="space-y-3">
       <input type="hidden" name="navigation" value={toLines(items)} />
-      <datalist id={listId}>
-        {links.map((l) => (
-          <option key={l.href} value={l.href}>
-            {l.label}
-          </option>
-        ))}
-      </datalist>
       {items.map((item, i) => (
         <div key={i} className="rounded border border-black/15 bg-white p-3">
           <div className="flex flex-wrap items-center gap-2">

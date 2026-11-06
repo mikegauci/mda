@@ -2,6 +2,7 @@
 import { revalidatePath, updateTag } from "next/cache";
 import { assertAdmin } from "@/lib/auth/admin";
 import { RESERVED_SLUGS, slugify } from "@/lib/slug";
+import { isLinkAddress } from "@/lib/internal-links";
 import { PAGE_FIELDS, parseTiles } from "@/lib/page-fields";
 import { pageContentMode } from "@/lib/page-content";
 import { createClient } from "@/lib/supabase/server";
@@ -74,8 +75,8 @@ export async function savePage(
       if (typeof value !== "string" || value.length > (tiles ? 20000 : 5000))
         return { error: "Page text must be under 5,000 characters per field." };
       // Links are site paths or anchors on the page (#courses).
-      if (key.endsWith("Url") && !/^(\/(?!\/)|#)[^\s]*$/.test(value))
-        return { error: "Links must be a path on this site or a #section." };
+      if (key.endsWith("Url") && !isLinkAddress(value))
+        return { error: "Choose a valid link." };
       if (
         PAGE_FIELDS[path][key].kind === "image" &&
         (!value || /[\x00-\x1f:?#]/.test(value) || value.startsWith("/"))
@@ -105,9 +106,9 @@ export async function savePage(
         for (const [i, t] of list.entries()) {
           if (!t.title.trim() || t.title.length > 200)
             return { error: `Course ${i + 1} needs a title.` };
-          if (!/^\/(?!\/)[^\s]*$/.test(t.url))
+          if (!isLinkAddress(t.url))
             return {
-              error: `Course ${i + 1}: the link must be a path on this site.`,
+              error: `Course ${i + 1}: choose a valid link.`,
             };
           if (
             !t.image ||

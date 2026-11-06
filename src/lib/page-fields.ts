@@ -4,7 +4,7 @@
 type Field = {
   label: string;
   value: string;
-  kind?: "image" | "order" | "select" | "tiles";
+  kind?: "image" | "order" | "select" | "tiles" | "link";
 };
 
 // A homepage course tile: the title (line breaks kept), a site link and a
@@ -80,7 +80,11 @@ export const PAGE_FIELDS: Record<string, Record<string, Field>> = {
       value: "time to detail\nyour own car",
     },
     heroButton: { label: "Hero button", value: "VIEW COURSES" },
-    heroButtonUrl: { label: "Hero button URL", value: "#courses" },
+    heroButtonUrl: {
+      label: "Hero button link",
+      value: "#courses",
+      kind: "link",
+    },
     aboutImage: {
       label: "About image",
       value: "wp/2023/05/mda-logo-blk.svg",

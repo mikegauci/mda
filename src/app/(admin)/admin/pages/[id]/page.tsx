@@ -32,7 +32,7 @@ export default async function EditPage({
           heroMediaId: page.hero_media_id,
           seo: (page.seo ?? {}) as PageInput["seo"],
           managedContent: hasManagedContent(page.seo),
-          contentFields: await getPageFields(page.path),
+          contentFields: await getPageFields(page.path, true),
         }}
         hero={page.hero}
       />

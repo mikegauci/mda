@@ -1,3 +1,5 @@
+import { isLinkAddress } from "./internal-links.ts";
+
 export type NavItem = { label: string; href: string; children?: NavItem[] };
 
 // The live menu: the home page, its #about and #courses anchors (with the
@@ -64,7 +66,7 @@ export function siteNavigation(lines?: string): NavItem[] {
       .replace(/^\s*-\s*/, "")
       .split("|")
       .map((s) => s.trim());
-    if (!label || !/^\/(?!\/)[^\s]*$/.test(href ?? "")) continue;
+    if (!label || !isLinkAddress(href ?? "")) continue;
     const parent = items.at(-1);
     if (child && parent) (parent.children ??= []).push({ label, href });
     else if (!child) items.push({ label, href });

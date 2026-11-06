@@ -1,5 +1,6 @@
 "use client";
 import { useState, useTransition } from "react";
+import { LinkField } from "@/components/admin/link-picker";
 import { LocalDraft } from "@/components/admin/local-draft";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -125,6 +126,16 @@ export function PageEditor({
                     <option value="video">Video</option>
                     <option value="image">Image</option>
                   </select>
+                ) : config.kind === "link" ? (
+                  <LinkField
+                    label={config.label}
+                    value={page.contentFields?.[key] ?? config.value}
+                    onChange={(value) =>
+                      update({
+                        contentFields: { ...page.contentFields, [key]: value },
+                      })
+                    }
+                  />
                 ) : config.kind === "tiles" ? (
                   <CourseTilesField
                     value={page.contentFields?.[key] ?? config.value}

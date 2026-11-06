@@ -100,39 +100,11 @@ export default async function Tools({
       .maybeSingle();
     if (error) throw error;
     const settings = (data?.value ?? {}) as Record<string, string>;
-    const [{ data: courses }, { data: pages }] = await Promise.all([
-      db
-        .from("products")
-        .select("name,slug")
-        .eq("status", "published")
-        .order("name"),
-      db
-        .from("pages")
-        .select("title,path")
-        .eq("status", "published")
-        .order("title"),
-    ]);
-    const links = [
-      { label: "Homepage", href: "/" },
-      { label: "Homepage: about", href: "/#about" },
-      { label: "Homepage: courses", href: "/#courses" },
-      { label: "Footer: contact", href: "/#contact" },
-      ...(pages ?? [])
-        .filter((p) => p.path && !["shop", "cart", "checkout"].includes(p.path))
-        .map((p) => ({ label: p.title, href: `/${p.path}/` })),
-      ...(courses ?? []).map((c) => ({
-        label: c.name,
-        href: `/product/${c.slug}/`,
-      })),
-    ];
     body = (
       <ActionForm action={saveSiteSettings} className="max-w-3xl space-y-6">
         <fieldset className="space-y-2">
           <legend className="mb-2 font-bold">Menu</legend>
-          <NavigationEditor
-            initial={siteNavigation(settings.navigation)}
-            links={links}
-          />
+          <NavigationEditor initial={siteNavigation(settings.navigation)} />
         </fieldset>
         {(
           [
@@ -332,6 +304,9 @@ export default async function Tools({
     for (const { table, rows } of groups)
       for (const row of rows) {
         if (row.status !== "published") continue;
+        known.add(
+          `/internal-links/${table === "pages" ? "page" : "product"}/${row.id}`,
+        );
         const slug = table === "pages" ? row.path : row.slug;
         if (!slug) continue;
         const prefix = table === "products" ? "/product/" : "/";
