@@ -5,7 +5,7 @@ import { cacheLife, cacheTag } from "next/cache";
 import { publicDb } from "@/lib/supabase/public";
 export async function getSiteSettings() {
   "use cache";
-  cacheLife("hours");
+  cacheLife("weeks");
   cacheTag("site-settings", "pages", "products");
   const { data, error } = await publicDb
     .from("settings")
@@ -23,6 +23,6 @@ export async function getSiteSettings() {
 // footer rolls over by itself on 1 January.
 export async function currentYear() {
   "use cache";
-  cacheLife("days");
+  cacheLife("weeks");
   return String(new Date().getFullYear());
 }

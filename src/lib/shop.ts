@@ -11,7 +11,7 @@ export const PRODUCT_SELECT =
 export async function getProducts(): Promise<Product[]> {
   "use cache";
   cacheTag("products", "pages");
-  cacheLife("hours");
+  cacheLife("weeks");
   const { data, error } = await publicDb
     .from("products")
     .select(PRODUCT_SELECT)
@@ -26,7 +26,7 @@ export async function getProducts(): Promise<Product[]> {
 export async function getProduct(slug: string) {
   "use cache";
   cacheTag("products", `product:${slug}`);
-  cacheLife("hours");
+  cacheLife("weeks");
   return (await getProducts()).find((p) => p.slug === slug) ?? null;
 }
 
@@ -34,7 +34,7 @@ export async function getProduct(slug: string) {
 export async function getMediaPaths(ids: string[]) {
   "use cache";
   cacheTag("products", "media");
-  cacheLife("hours");
+  cacheLife("weeks");
   if (!ids.length) return {} as Record<string, string>;
   const { data, error } = await publicDb
     .from("media")
@@ -48,7 +48,7 @@ export async function getMediaPaths(ids: string[]) {
 export async function getCategories(): Promise<Category[]> {
   "use cache";
   cacheTag("products", "pages");
-  cacheLife("hours");
+  cacheLife("weeks");
   const used = new Map<string, Category>();
   for (const p of await getProducts())
     for (const { category } of p.categories)
@@ -79,7 +79,7 @@ export async function getShopSettings() {
 export async function getWhatsappUrl() {
   "use cache";
   cacheTag("site-settings");
-  cacheLife("hours");
+  cacheLife("weeks");
   const { data } = await publicDb
     .from("settings")
     .select("value")

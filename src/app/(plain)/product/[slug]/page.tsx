@@ -1,5 +1,5 @@
+import { redirectOrNotFound } from "@/lib/redirects";
 import { Suspense } from "react";
-import { notFound } from "next/navigation";
 import { Container } from "@/components/layout/container";
 import { ProductCard } from "@/components/shop/product-card";
 import { ProductDetail } from "@/components/shop/product-detail";
@@ -52,8 +52,9 @@ function ProductGrid({
 async function Content({
   params,
 }: Pick<PageProps<"/product/[slug]">, "params">) {
-  const p = await getProduct((await params).slug);
-  if (!p) notFound();
+  const { slug } = await params;
+  const p = await getProduct(slug);
+  if (!p) return redirectOrNotFound(`/product/${slug}/`);
   const products = await getProducts();
   const details = (Array.isArray(p.details) ? p.details : []) as CourseDetail[];
   const iconPaths = await getMediaPaths(

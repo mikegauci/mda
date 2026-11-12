@@ -169,6 +169,7 @@ export async function saveProduct(
     await db.from("redirects").delete().eq("source", `/product/${slug}/`);
   }
   updateTag("products");
+  updateTag("redirects");
   updateTag(`product:${slug}`);
   if (previous) updateTag(`product:${previous.slug}`);
   revalidatePath("/admin/products/");

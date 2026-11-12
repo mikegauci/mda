@@ -6,7 +6,7 @@ import { internalHref, type InternalLink } from "@/lib/internal-links";
 export async function getInternalLinks(): Promise<InternalLink[]> {
   "use cache";
   cacheTag("pages", "products");
-  cacheLife("hours");
+  cacheLife("weeks");
   const [pages, products] = await Promise.all([
     publicDb
       .from("pages")
