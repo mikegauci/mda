@@ -8,7 +8,7 @@ import { publicDb } from "@/lib/supabase/public";
 export async function getStaticPage(path: string, raw = false) {
   "use cache";
   cacheTag("pages", "products", `page:${path}`);
-  cacheLife("hours");
+  cacheLife("weeks");
   const { data, error } = await publicDb
     .from("pages")
     .select("*")
@@ -22,7 +22,7 @@ export async function getStaticPage(path: string, raw = false) {
 export async function getStandalonePages() {
   "use cache";
   cacheTag("pages");
-  cacheLife("hours");
+  cacheLife("weeks");
   const { data, error } = await publicDb
     .from("pages")
     .select("path,updated_at,seo")
@@ -34,7 +34,7 @@ export async function getStandalonePages() {
 export async function getPageImage(id: string) {
   "use cache";
   cacheTag("pages");
-  cacheLife("hours");
+  cacheLife("weeks");
   const { data, error } = await publicDb
     .from("media")
     .select("path,width,height,alt")

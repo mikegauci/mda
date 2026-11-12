@@ -1,8 +1,8 @@
+import { redirectOrNotFound } from "@/lib/redirects";
 import { getPageImage, getStaticPage } from "@/lib/static-pages";
 import { StaticPageContent } from "@/components/managed-page-content";
 import type { Seo } from "@/lib/seo";
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { notFoundMetadata, pageMetadata } from "@/lib/seo";
 
@@ -27,7 +27,7 @@ export async function generateMetadata({
 async function PageView({ params }: Pick<PageProps<"/[slug]">, "params">) {
   const { slug } = await params;
   const page = await getStaticPage(slug);
-  if (!page) notFound();
+  if (!page) return redirectOrNotFound(`/${slug}/`);
   return <StaticPageContent page={page} />;
 }
 

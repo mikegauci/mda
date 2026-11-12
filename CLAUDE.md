@@ -49,6 +49,7 @@ pnpm migrate       # WordPress import dry run; --apply writes to Supabase
 ## Conventions (inherited from Battery Factory and Rotta)
 
 - Next.js 16: middleware is `src/proxy.ts`; `cacheComponents` is on. Read `node_modules/next/dist/docs/` before using unfamiliar APIs.
+- Function CPU (Vercel Hobby allowance, shared by all projects in the team): `src/proxy.ts` runs only for requests carrying the Supabase auth cookie (each run is billed, about 100ms); never make it run for anonymous visitors. Redirects are served by `redirects()` in `next.config.ts` (retired WordPress URLs plus the `redirects` table at build time) and, for rows added since the last deploy, by `redirectOrNotFound()` in `@/lib/redirects`, which pages call instead of `notFound()`. Cached data uses `cacheLife("weeks")` and relies on tag revalidation. `htmlLimitedBots` matches nothing so crawlers get the prerendered pages.
 - `trailingSlash: true` keeps WordPress URLs (`/product/<slug>/`). Internal links always end with a slash.
 - One header style for every page (`SiteShell`); `(hero)` and `(plain)` route groups are only folders.
 - Design tokens live in `src/app/globals.css` (`brand` #000000, `ink` #000000, `panel` #f9fafb). Font is MADE Outer Sans, self-hosted from the live theme. Section titles use `.section-title` (32px Black, lowercase), the hero pill `.bf-button`, WooCommerce outline pills `.pill-button`, black buttons `.shop-button`. Desktop breakpoint is 922px: use the `desk:` variant.
